@@ -1,5 +1,3 @@
-username : omkumaramritsar
-p/w : VjvBzPmlKozU1I9s
 
 # Server Configuration
 PORT=5000
