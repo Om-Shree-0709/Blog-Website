@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: "Inter", system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-primary {
+    @apply btn bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500;
+  }
+
+  .btn-secondary {
+    @apply btn bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600;
+  }
+
+  .btn-outline {
+    @apply btn border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800;
+  }
+
+  .input {
+    @apply block w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-100 dark:placeholder-gray-400;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+  }
+
+  .prose-custom {
+    @apply prose prose-gray dark:prose-invert max-w-none;
+  }
+
+  .prose-custom h1 {
+    @apply text-3xl font-bold text-gray-900 dark:text-gray-100 mb-6;
+  }
+
+  .prose-custom h2 {
+    @apply text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-4 mt-8;
+  }
+
+  .prose-custom h3 {
+    @apply text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3 mt-6;
+  }
+
+  .prose-custom p {
+    @apply text-gray-700 dark:text-gray-300 mb-4 leading-relaxed;
+  }
+
+  .prose-custom a {
+    @apply text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 underline;
+  }
+
+  .prose-custom code {
+    @apply bg-gray-100 dark:bg-gray-700 text-red-600 dark:text-red-400 px-1 py-0.5 rounded text-sm;
+  }
+
+  .prose-custom pre {
+    @apply bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto;
+  }
+
+  .prose-custom blockquote {
+    @apply border-l-4 border-primary-500 pl-4 italic text-gray-600 dark:text-gray-400;
+  }
+
+  .prose-custom ul {
+    @apply list-disc list-inside mb-4;
+  }
+
+  .prose-custom ol {
+    @apply list-decimal list-inside mb-4;
+  }
+
+  .prose-custom li {
+    @apply text-gray-700 dark:text-gray-300 mb-1;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
