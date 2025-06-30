@@ -42,12 +42,8 @@ const mongoOptions = {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
   bufferCommands: false,
-  ...(process.env.NODE_ENV === "production" && {
-    ssl: true,
-    sslValidate: true,
-    retryWrites: true,
-    w: "majority",
-  }),
+  retryWrites: true,
+  w: "majority",
 };
 
 mongoose
