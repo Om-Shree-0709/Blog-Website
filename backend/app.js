@@ -124,20 +124,20 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(process.cwd(), "frontend/build")));
+// // Serve static files in production
+// if (process.env.NODE_ENV === "production") {
+//   app.use(express.static(path.join(process.cwd(), "frontend/build")));
 
-  // Handle React routing, return all requests to React app
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(process.cwd(), "frontend/build", "index.html"));
-  });
-} else {
-  // 404 handler for development
-  app.use("*", (req, res) => {
-    res.status(404).json({ message: "Route not found" });
-  });
-}
+//   // Handle React routing, return all requests to React app
+//   app.get("*", (req, res) => {
+//     res.sendFile(path.join(process.cwd(), "frontend/build", "index.html"));
+//   });
+// } else {
+//   // 404 handler for development
+//   app.use("*", (req, res) => {
+//     res.status(404).json({ message: "Route not found" });
+//   });
+// }
 
 // Global error handler
 app.use((err, req, res, next) => {
