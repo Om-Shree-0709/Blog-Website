@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import app from "./app.js";
+import express from "express";
 
 // ES6 module fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
