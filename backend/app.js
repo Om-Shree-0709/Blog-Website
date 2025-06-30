@@ -80,6 +80,7 @@ const corsOptions = {
     const allowedOrigins = [
       "http://localhost:3000",
       "http://127.0.0.1:3000",
+      "https://blog-website-inwellbackend.onrender.com/",
       process.env.CORS_ORIGIN,
     ].filter(Boolean);
 

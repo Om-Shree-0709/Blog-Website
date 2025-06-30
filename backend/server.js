@@ -71,18 +71,16 @@ mongoose
   });
 
 // Graceful shutdown
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   console.log("SIGTERM received, shutting down gracefully");
-  mongoose.connection.close(() => {
-    console.log("MongoDB connection closed");
-    process.exit(0);
-  });
+  await mongoose.connection.close();
+  console.log("MongoDB connection closed");
+  process.exit(0);
 });
 
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   console.log("SIGINT received, shutting down gracefully");
-  mongoose.connection.close(() => {
-    console.log("MongoDB connection closed");
-    process.exit(0);
-  });
+  await mongoose.connection.close();
+  console.log("MongoDB connection closed");
+  process.exit(0);
 });
