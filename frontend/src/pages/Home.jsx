@@ -14,7 +14,6 @@ const Home = () => {
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -27,7 +26,6 @@ const Home = () => {
   const fetchPosts = useCallback(async (page = 1) => {
     try {
       setLoading(true);
-      setError(null);
 
       const response = await api.get(`/posts?page=${page}&limit=6`);
 
@@ -46,7 +44,6 @@ const Home = () => {
         message = error.message;
       }
       toast.error(message);
-      setError(message);
       console.error("Error fetching posts:", error);
     } finally {
       setLoading(false);
@@ -77,7 +74,6 @@ const Home = () => {
           message = err.message;
         }
         toast.error(message);
-        setError(message);
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
@@ -221,7 +217,11 @@ const Home = () => {
                 </h2>
                 <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                   {categories.map((category) => (
-                    <CategoryCard key={category.name} category={category} />
+                    <CategoryCard
+                      key={category.name}
+                      category={category.name}
+                      count={category.count}
+                    />
                   ))}
                 </div>
               </section>

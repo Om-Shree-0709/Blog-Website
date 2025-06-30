@@ -11,7 +11,12 @@ const __dirname = path.dirname(__filename);
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-const PORT = process.env.PORT || 5000;
+// Ensure NODE_ENV is set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "development";
+}
+
+const PORT = parseInt(process.env.PORT, 10) || 5000;
 
 // Check MONGODB_URI
 if (!process.env.MONGODB_URI) {
@@ -31,14 +36,11 @@ if (!mongoUri.includes("/inkwell")) {
     : mongoUri + "/inkwell";
 }
 
-// MongoDB connection options for production
+// MongoDB connection options for modern versions
 const mongoOptions = {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-  bufferMaxEntries: 0,
   bufferCommands: false,
   ...(process.env.NODE_ENV === "production" && {
     ssl: true,
@@ -52,7 +54,7 @@ mongoose
   .connect(mongoUri, mongoOptions)
   .then(() => {
     console.log("✅ Connected to MongoDB");
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(

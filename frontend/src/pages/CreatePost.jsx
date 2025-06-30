@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet-async";
 import { useForm } from "react-hook-form";
 import ReactMarkdown from "react-markdown";
-import "react-quill/dist/quill.snow.css";
+import { Helmet } from "react-helmet-async";
 import { Save, Eye, Upload, X, Plus, Calendar } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import LoadingSpinner from "../components/UI/LoadingSpinner";
 import toast from "react-hot-toast";
 import api from "../utils/api";
+import LoadingSpinner from "../components/UI/LoadingSpinner";
+import "react-quill/dist/quill.snow.css";
 
 const CreatePost = () => {
   const [content, setContent] = useState("");
@@ -19,7 +18,6 @@ const CreatePost = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
 
   const {
     register,
@@ -381,18 +379,16 @@ Write your content here...`}
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="flex items-center space-x-4">
-                <button
-                  type="button"
-                  onClick={handleSaveDraft}
-                  disabled={isLoading}
-                  className="btn-outline"
-                >
-                  <Save className="h-4 w-4 mr-2" />
-                  {isLoading ? "Saving..." : "Save Draft"}
-                </button>
-              </div>
+            <div className="flex items-center justify-end pt-6 border-t border-gray-200 dark:border-gray-700 space-x-4">
+              <button
+                type="button"
+                onClick={handleSaveDraft}
+                disabled={isLoading}
+                className="btn-outline"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                {isLoading ? "Saving..." : "Save as Draft"}
+              </button>
               <button
                 type="button"
                 onClick={handlePublish}
@@ -404,7 +400,7 @@ Write your content here...`}
                 ) : (
                   <>
                     <Calendar className="h-4 w-4 mr-2" />
-                    Publish Post
+                    Publish Now
                   </>
                 )}
               </button>

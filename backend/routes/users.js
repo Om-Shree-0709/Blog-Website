@@ -1,19 +1,15 @@
-const express = require("express");
-const User = require("../models/User");
-const Post = require("../models/Post");
-const { protect, admin, ownerOrAdmin } = require("../middleware/auth");
-const {
-  validateProfileUpdate,
-  validateUsername,
-  validateObjectId,
-} = require("../middleware/validation");
+import express from "express";
+import User from "../models/User.js";
+import Post from "../models/Post.js";
+import { protect, admin, ownerOrAdmin } from "../middleware/auth.js";
+import { validateProfileUpdate, validateId } from "../middleware/validation.js";
 
 const router = express.Router();
 
 // @route   GET /api/users/:username
 // @desc    Get user profile by username
 // @access  Public
-router.get("/:username", validateUsername, async (req, res) => {
+router.get("/:username", async (req, res) => {
   try {
     const { username } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -66,7 +62,7 @@ router.get("/:username", validateUsername, async (req, res) => {
 router.put(
   "/:id",
   protect,
-  validateObjectId,
+  validateId,
   validateProfileUpdate,
   async (req, res) => {
     try {
@@ -87,19 +83,15 @@ router.put(
       }
 
       // Update fields
-      const updateFields = {};
-      if (bio !== undefined) updateFields.bio = bio;
-      if (avatar !== undefined) updateFields.avatar = avatar;
-      if (socialLinks !== undefined) updateFields.socialLinks = socialLinks;
+      if (bio !== undefined) user.bio = bio;
+      if (avatar !== undefined) user.avatar = avatar;
+      if (socialLinks !== undefined) user.socialLinks = socialLinks;
 
-      const updatedUser = await User.findByIdAndUpdate(id, updateFields, {
-        new: true,
-        runValidators: true,
-      }).select("-password");
+      await user.save();
 
       res.json({
         message: "Profile updated successfully",
-        user: updatedUser.getPublicProfile(),
+        user: user.getPublicProfile(),
       });
     } catch (error) {
       console.error("Update profile error:", error);
@@ -111,7 +103,7 @@ router.put(
 // @route   DELETE /api/users/:id
 // @desc    Delete user (admin only)
 // @access  Private (admin)
-router.delete("/:id", protect, admin, validateObjectId, async (req, res) => {
+router.delete("/:id", protect, admin, validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -139,58 +131,53 @@ router.delete("/:id", protect, admin, validateObjectId, async (req, res) => {
 // @route   POST /api/users/:id/bookmark/:postId
 // @desc    Toggle bookmark for a post
 // @access  Private
-router.post(
-  "/:id/bookmark/:postId",
-  protect,
-  validateObjectId,
-  async (req, res) => {
-    try {
-      const { id, postId } = req.params;
+router.post("/:id/bookmark/:postId", protect, validateId, async (req, res) => {
+  try {
+    const { id, postId } = req.params;
 
-      // Check if user is authorized
-      if (req.user._id.toString() !== id) {
-        return res.status(403).json({ message: "Not authorized" });
-      }
-
-      const user = await User.findById(id);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Check if post exists
-      const post = await Post.findById(postId);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-
-      // Toggle bookmark
-      const bookmarkIndex = user.bookmarks.indexOf(postId);
-      if (bookmarkIndex > -1) {
-        user.bookmarks.splice(bookmarkIndex, 1);
-      } else {
-        user.bookmarks.push(postId);
-      }
-
-      await user.save();
-
-      res.json({
-        message:
-          bookmarkIndex > -1
-            ? "Post removed from bookmarks"
-            : "Post added to bookmarks",
-        bookmarked: bookmarkIndex === -1,
-      });
-    } catch (error) {
-      console.error("Toggle bookmark error:", error);
-      res.status(500).json({ message: "Server error" });
+    // Check if user is authorized
+    if (req.user._id.toString() !== id) {
+      return res.status(403).json({ message: "Not authorized" });
     }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    // Toggle bookmark
+    const bookmarkIndex = user.bookmarks.indexOf(postId);
+    if (bookmarkIndex > -1) {
+      user.bookmarks.splice(bookmarkIndex, 1);
+    } else {
+      user.bookmarks.push(postId);
+    }
+
+    await user.save();
+
+    res.json({
+      message:
+        bookmarkIndex > -1
+          ? "Post removed from bookmarks"
+          : "Post added to bookmarks",
+      bookmarked: bookmarkIndex === -1,
+    });
+  } catch (error) {
+    console.error("Toggle bookmark error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-);
+});
 
 // @route   GET /api/users/:id/bookmarks
 // @desc    Get user's bookmarked posts
 // @access  Private
-router.get("/:id/bookmarks", protect, validateObjectId, async (req, res) => {
+router.get("/:id/bookmarks", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -202,12 +189,7 @@ router.get("/:id/bookmarks", protect, validateObjectId, async (req, res) => {
 
     const user = await User.findById(id).populate({
       path: "bookmarks",
-      select:
-        "title slug featuredImage excerpt author createdAt readTime likeCount commentCount",
-      populate: {
-        path: "author",
-        select: "username avatar",
-      },
+      select: "title slug featuredImage excerpt createdAt",
       options: {
         sort: { createdAt: -1 },
         limit: limit * 1,
@@ -219,7 +201,6 @@ router.get("/:id/bookmarks", protect, validateObjectId, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Get total count
     const total = user.bookmarks.length;
 
     res.json({
@@ -238,48 +219,48 @@ router.get("/:id/bookmarks", protect, validateObjectId, async (req, res) => {
   }
 });
 
-// @route   GET /api/users/search
-// @desc    Search users
-// @access  Public
-router.get("/search", async (req, res) => {
+// @route   GET /api/users/:id/stats
+// @desc    Get user statistics
+// @access  Private
+router.get("/:id/stats", protect, validateId, async (req, res) => {
   try {
-    const { query, page = 1, limit = 10 } = req.query;
+    const { id } = req.params;
 
-    if (!query || query.trim().length < 2) {
-      return res
-        .status(400)
-        .json({ message: "Search query must be at least 2 characters long" });
+    // Check if user is authorized
+    if (req.user._id.toString() !== id && req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
-    const searchQuery = {
-      $or: [
-        { username: { $regex: query, $options: "i" } },
-        { bio: { $regex: query, $options: "i" } },
-      ],
-    };
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    const users = await User.find(searchQuery)
-      .select("username avatar bio role createdAt")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await User.countDocuments(searchQuery);
+    // Get statistics
+    const totalPosts = await Post.countDocuments({ author: id });
+    const publishedPosts = await Post.countDocuments({
+      author: id,
+      isPublished: true,
+    });
+    const draftPosts = totalPosts - publishedPosts;
+    const totalViews = await Post.aggregate([
+      { $match: { author: user._id } },
+      { $group: { _id: null, totalViews: { $sum: "$viewCount" } } },
+    ]);
 
     res.json({
-      users,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalUsers: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
+      stats: {
+        totalPosts,
+        publishedPosts,
+        draftPosts,
+        totalViews: totalViews[0]?.totalViews || 0,
+        totalBookmarks: user.bookmarks.length,
       },
     });
   } catch (error) {
-    console.error("Search users error:", error);
+    console.error("Get user stats error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-module.exports = router;
+export default router;

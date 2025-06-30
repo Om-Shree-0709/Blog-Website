@@ -118,7 +118,6 @@ postSchema.virtual("readingTime").get(function () {
 });
 
 // Add indexes for better performance
-postSchema.index({ slug: 1 }, { unique: true });
 postSchema.index({ author: 1, isPublished: 1 });
 postSchema.index({ isPublished: 1, createdAt: -1 });
 postSchema.index({ isPublished: 1, viewCount: -1 });

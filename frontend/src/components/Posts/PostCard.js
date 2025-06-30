@@ -1,14 +1,53 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, Eye, Bookmark } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
+import api from "../../utils/api";
+import toast from "react-hot-toast";
 
 const PostCard = ({ post, featured = false }) => {
   const { user, isAuthenticated } = useAuth();
+  const [likes, setLikes] = useState(post.likes || []);
+  const [likeCount, setLikeCount] = useState(post.likeCount || 0);
+  const [isLiked, setIsLiked] = useState(
+    user && post.likes?.includes(user._id)
+  );
+  const [isBookmarked, setIsBookmarked] = useState(
+    user && user.bookmarks?.includes(post._id)
+  );
 
-  const isLiked = user && post.likes?.includes(user._id);
-  const isBookmarked = user && user.bookmarks?.includes(post._id);
+  const handleLike = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please login to like posts");
+      return;
+    }
+    setIsLiked((prev) => !prev);
+    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    try {
+      await api.post(`/posts/${post._id}/like`);
+    } catch (err) {
+      setIsLiked((prev) => !prev);
+      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
+      toast.error("Failed to like post");
+    }
+  };
+
+  const handleBookmark = async (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please login to bookmark posts");
+      return;
+    }
+    setIsBookmarked((prev) => !prev);
+    try {
+      await api.post(`/posts/${post._id}/bookmark`);
+    } catch (err) {
+      setIsBookmarked((prev) => !prev);
+      toast.error("Failed to update bookmark");
+    }
+  };
 
   return (
     <article
@@ -117,12 +156,14 @@ const PostCard = ({ post, featured = false }) => {
         <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
-              <Heart
-                className={`h-4 w-4 ${
-                  isLiked ? "text-red-500 fill-current" : ""
-                }`}
-              />
-              <span>{post.likeCount || 0}</span>
+              <button onClick={handleLike} className="focus:outline-none">
+                <Heart
+                  className={`h-4 w-4 ${
+                    isLiked ? "text-red-500 fill-current" : ""
+                  }`}
+                />
+              </button>
+              <span>{likeCount}</span>
             </div>
             <div className="flex items-center space-x-1">
               <MessageCircle className="h-4 w-4" />
@@ -136,6 +177,7 @@ const PostCard = ({ post, featured = false }) => {
 
           {isAuthenticated && (
             <button
+              onClick={handleBookmark}
               className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                 isBookmarked ? "text-primary-600" : "text-gray-400"
               }`}

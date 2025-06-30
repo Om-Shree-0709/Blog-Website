@@ -1,12 +1,12 @@
-const express = require("express");
-const Post = require("../models/Post");
-const User = require("../models/User");
-const { protect, author, ownerOrAdmin } = require("../middleware/auth");
-const {
+import express from "express";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import { protect, author, ownerOrAdmin } from "../middleware/auth.js";
+import {
   validatePost,
-  validateObjectId,
-  validateSlug,
-} = require("../middleware/validation");
+  validateId,
+  validateSearch,
+} from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -103,9 +103,9 @@ router.get("/:slug", async (req, res) => {
     ) {
       // Try to get user from token
       const token = req.headers.authorization.split(" ")[1];
-      const jwt = require("jsonwebtoken");
+      const jwt = await import("jsonwebtoken");
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.default.verify(token, process.env.JWT_SECRET);
         userId = decoded.id;
       } catch (e) {}
     }
@@ -159,10 +159,10 @@ router.get("/:slug", async (req, res) => {
   }
 });
 
-// @route   GET /api/posts/:id
+// @route   GET /api/posts/id/:id
 // @desc    Get a post by ID (for editing)
 // @access  Private (owner or admin)
-router.get("/id/:id", protect, validateObjectId, async (req, res) => {
+router.get("/id/:id", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
     const post = await Post.findById(id).populate(
@@ -201,6 +201,8 @@ router.post("/", protect, author, validatePost, async (req, res) => {
       tags,
       category,
       isPublished = false,
+      seoTitle,
+      seoDescription,
     } = req.body;
 
     const post = await Post.create({
@@ -212,6 +214,8 @@ router.post("/", protect, author, validatePost, async (req, res) => {
       category,
       author: req.user._id,
       isPublished,
+      seoTitle,
+      seoDescription,
     });
 
     await post.populate("author", "username avatar");
@@ -222,11 +226,6 @@ router.post("/", protect, author, validatePost, async (req, res) => {
     });
   } catch (error) {
     console.error("Create post error:", error);
-    if (error.code === 11000) {
-      return res
-        .status(400)
-        .json({ message: "A post with this title already exists" });
-    }
     res.status(500).json({ message: "Server error" });
   }
 });
@@ -234,74 +233,64 @@ router.post("/", protect, author, validatePost, async (req, res) => {
 // @route   PUT /api/posts/:id
 // @desc    Update a post
 // @access  Private (owner or admin)
-router.put(
-  "/:id",
-  protect,
-  validateObjectId,
-  validatePost,
-  async (req, res) => {
-    try {
-      const { id } = req.params;
-      const {
-        title,
-        content,
-        excerpt,
-        featuredImage,
-        tags,
-        category,
-        isPublished,
-      } = req.body;
+router.put("/:id", protect, validateId, validatePost, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      title,
+      content,
+      excerpt,
+      featuredImage,
+      tags,
+      category,
+      isPublished,
+      seoTitle,
+      seoDescription,
+    } = req.body;
 
-      const post = await Post.findById(id);
-      if (!post) {
-        return res.status(404).json({ message: "Post not found" });
-      }
-
-      // Check if user is authorized to update this post
-      if (
-        req.user.role !== "admin" &&
-        post.author.toString() !== req.user._id.toString()
-      ) {
-        return res
-          .status(403)
-          .json({ message: "Not authorized to update this post" });
-      }
-
-      const updateFields = {};
-      if (title !== undefined) updateFields.title = title;
-      if (content !== undefined) updateFields.content = content;
-      if (excerpt !== undefined) updateFields.excerpt = excerpt;
-      if (featuredImage !== undefined)
-        updateFields.featuredImage = featuredImage;
-      if (tags !== undefined) updateFields.tags = tags;
-      if (category !== undefined) updateFields.category = category;
-      if (isPublished !== undefined) updateFields.isPublished = isPublished;
-
-      const updatedPost = await Post.findByIdAndUpdate(id, updateFields, {
-        new: true,
-        runValidators: true,
-      }).populate("author", "username avatar");
-
-      res.json({
-        message: "Post updated successfully",
-        post: updatedPost,
-      });
-    } catch (error) {
-      console.error("Update post error:", error);
-      if (error.code === 11000) {
-        return res
-          .status(400)
-          .json({ message: "A post with this title already exists" });
-      }
-      res.status(500).json({ message: "Server error" });
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
     }
+
+    // Check if user is authorized to update this post
+    if (
+      req.user.role !== "admin" &&
+      post.author.toString() !== req.user._id.toString()
+    ) {
+      return res
+        .status(403)
+        .json({ message: "Not authorized to update this post" });
+    }
+
+    // Update fields
+    if (title !== undefined) post.title = title;
+    if (content !== undefined) post.content = content;
+    if (excerpt !== undefined) post.excerpt = excerpt;
+    if (featuredImage !== undefined) post.featuredImage = featuredImage;
+    if (tags !== undefined) post.tags = tags;
+    if (category !== undefined) post.category = category;
+    if (isPublished !== undefined) post.isPublished = isPublished;
+    if (seoTitle !== undefined) post.seoTitle = seoTitle;
+    if (seoDescription !== undefined) post.seoDescription = seoDescription;
+
+    await post.save();
+    await post.populate("author", "username avatar");
+
+    res.json({
+      message: "Post updated successfully",
+      post,
+    });
+  } catch (error) {
+    console.error("Update post error:", error);
+    res.status(500).json({ message: "Server error" });
   }
-);
+});
 
 // @route   DELETE /api/posts/:id
 // @desc    Delete a post
 // @access  Private (owner or admin)
-router.delete("/:id", protect, validateObjectId, async (req, res) => {
+router.delete("/:id", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -332,109 +321,72 @@ router.delete("/:id", protect, validateObjectId, async (req, res) => {
 // @route   POST /api/posts/:id/like
 // @desc    Toggle like on a post
 // @access  Private
-router.post("/:id/like", protect, validateObjectId, async (req, res) => {
+router.post("/:id/like", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
+    // Find the post
     const post = await Post.findById(id);
     if (!post) {
       return res.status(404).json({ message: "Post not found" });
     }
 
-    if (!post.isPublished) {
-      return res.status(400).json({ message: "Cannot like unpublished posts" });
+    let update;
+    let liked;
+    if (post.likes.includes(userId)) {
+      // Unlike
+      update = { $pull: { likes: userId } };
+      liked = false;
+    } else {
+      // Like
+      update = { $addToSet: { likes: userId } };
+      liked = true;
     }
 
-    await post.toggleLike(req.user._id);
+    const updatedPost = await Post.findByIdAndUpdate(id, update, { new: true });
 
     res.json({
       message: "Like toggled successfully",
-      liked: post.likes.includes(req.user._id),
+      liked,
+      likeCount: updatedPost.likes.length,
     });
   } catch (error) {
-    console.error("Toggle like error:", error);
+    console.error("Toggle post like error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// @route   GET /api/posts/:id/comments
-// @desc    Get comments for a post
-// @access  Public
-router.get("/:id/comments", validateObjectId, async (req, res) => {
+// @route   POST /api/posts/:id/bookmark
+// @desc    Toggle bookmark on a post
+// @access  Private
+router.post("/:id/bookmark", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
 
-    const post = await Post.findById(id);
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
+    const user = await User.findById(req.user._id);
+    const bookmarkIndex = user.bookmarks.indexOf(id);
+
+    if (bookmarkIndex > -1) {
+      user.bookmarks.splice(bookmarkIndex, 1);
+    } else {
+      user.bookmarks.push(id);
     }
 
-    const Comment = require("../models/Comment");
-    const comments = await Comment.getCommentsForPost(id)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Comment.countDocuments({
-      post: id,
-      parentComment: null,
-    });
+    await user.save();
 
     res.json({
-      comments,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalComments: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
+      message: "Bookmark toggled successfully",
+      bookmarked: user.bookmarks.includes(id),
     });
   } catch (error) {
-    console.error("Get comments error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
-
-// @route   GET /api/posts/user/drafts
-// @desc    Get user's draft posts
-// @access  Private
-router.get("/user/drafts", protect, async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const posts = await Post.find({
-      author: req.user._id,
-      isPublished: false,
-    })
-      .populate("author", "username avatar")
-      .sort({ updatedAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Post.countDocuments({
-      author: req.user._id,
-      isPublished: false,
-    });
-
-    res.json({
-      posts,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalPosts: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Get drafts error:", error);
+    console.error("Toggle bookmark error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // @route   GET /api/posts/user/published
-// @desc    Get user's published posts
+// @desc    Get current user's published posts
 // @access  Private
 router.get("/user/published", protect, async (req, res) => {
   try {
@@ -470,4 +422,115 @@ router.get("/user/published", protect, async (req, res) => {
   }
 });
 
-module.exports = router;
+// @route   GET /api/posts/user/drafts
+// @desc    Get current user's draft posts
+// @access  Private
+router.get("/user/drafts", protect, async (req, res) => {
+  try {
+    const { page = 1, limit = 10 } = req.query;
+
+    const posts = await Post.find({
+      author: req.user._id,
+      isPublished: false,
+    })
+      .populate("author", "username avatar")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Post.countDocuments({
+      author: req.user._id,
+      isPublished: false,
+    });
+
+    res.json({
+      posts,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalPosts: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Get draft posts error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   GET /api/posts/user/:userId
+// @desc    Get all posts by a user
+// @access  Public
+router.get("/user/:userId", async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { page = 1, limit = 10, published = true } = req.query;
+
+    const query = { author: userId };
+    if (published === "true") {
+      query.isPublished = true;
+    }
+
+    const posts = await Post.find(query)
+      .populate("author", "username avatar")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Post.countDocuments(query);
+
+    res.json({
+      posts,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalPosts: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Get user posts error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// @route   GET /api/posts/:id/comments
+// @desc    Get comments for a post
+// @access  Public
+router.get("/:id/comments", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+    const Comment = (await import("../models/Comment.js")).default;
+    const comments = await Comment.find({ post: id, parentComment: null })
+      .populate("author", "username avatar")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+    const total = await Comment.countDocuments({
+      post: id,
+      parentComment: null,
+    });
+    res.json({
+      comments,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalComments: total,
+        hasNextPage: page * limit < total,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Get comments for post error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+export default router;

@@ -22,7 +22,6 @@ import LoadingSpinner from "../components/UI/LoadingSpinner";
 import toast from "react-hot-toast";
 import api from "../utils/api";
 import { useAuth } from "../contexts/AuthContext";
-import PostCard from "../components/Posts/PostCard";
 
 const Dashboard = () => {
   const { user, updateProfile, changePassword } = useAuth();
@@ -192,9 +191,27 @@ const Dashboard = () => {
             <nav className="-mb-px flex space-x-8">
               {[
                 { id: "overview", label: "Overview", icon: BarChart3 },
-                { id: "posts", label: "Published Posts", icon: FileText },
-                { id: "drafts", label: "Drafts", icon: BookOpen },
-                { id: "bookmarks", label: "Bookmarks", icon: Bookmark },
+                {
+                  id: "posts",
+                  label: `Published Posts${
+                    stats.publishedPosts ? ` (${stats.publishedPosts})` : ""
+                  }`,
+                  icon: FileText,
+                },
+                {
+                  id: "drafts",
+                  label: `Drafts${
+                    stats.draftPosts ? ` (${stats.draftPosts})` : ""
+                  }`,
+                  icon: BookOpen,
+                },
+                {
+                  id: "bookmarks",
+                  label: `Bookmarks${
+                    bookmarks.length ? ` (${bookmarks.length})` : ""
+                  }`,
+                  icon: Bookmark,
+                },
                 { id: "settings", label: "Settings", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;

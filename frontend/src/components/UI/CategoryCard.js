@@ -2,6 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 
 const CategoryCard = ({ category, count = 0 }) => {
+  // Validate props
+  if (!category || typeof category !== "string") {
+    console.warn("CategoryCard: Invalid category prop", category);
+    return null;
+  }
+
   const getCategoryColor = (category) => {
     const colors = {
       Technology:
@@ -28,7 +34,7 @@ const CategoryCard = ({ category, count = 0 }) => {
 
   return (
     <Link
-      to={`/search?category=${category}`}
+      to={`/search?category=${encodeURIComponent(category)}`}
       className="block p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition-all duration-200 hover:shadow-md group"
     >
       <div className="text-center">

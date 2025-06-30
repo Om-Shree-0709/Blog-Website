@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
@@ -24,73 +24,71 @@ function App() {
     <HelmetProvider>
       <ThemeProvider>
         <AuthProvider>
-          <Router>
-            <div className="App">
-              <Routes>
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Home />} />
-                  <Route path="login" element={<Login />} />
-                  <Route path="signup" element={<Signup />} />
-                  <Route path="search" element={<Search />} />
-                  <Route path="post/:slug" element={<PostDetail />} />
-                  <Route path="user/:username" element={<Profile />} />
+          <div className="App">
+            <Routes>
+              <Route path="/" element={<Layout />}>
+                <Route index element={<Home />} />
+                <Route path="login" element={<Login />} />
+                <Route path="signup" element={<Signup />} />
+                <Route path="search" element={<Search />} />
+                <Route path="post/:slug" element={<PostDetail />} />
+                <Route path="user/:username" element={<Profile />} />
 
-                  {/* Protected Routes */}
-                  <Route
-                    path="create-post"
-                    element={
-                      <ProtectedRoute>
-                        <CreatePost />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="edit-post/:id"
-                    element={
-                      <ProtectedRoute>
-                        <EditPost />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
+                {/* Protected Routes */}
+                <Route
+                  path="create-post"
+                  element={
+                    <ProtectedRoute>
+                      <CreatePost />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="edit-post/:id"
+                  element={
+                    <ProtectedRoute>
+                      <EditPost />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="dashboard"
+                  element={
+                    <ProtectedRoute>
+                      <Dashboard />
+                    </ProtectedRoute>
+                  }
+                />
 
-                  {/* 404 Route */}
-                  <Route path="*" element={<NotFound />} />
-                </Route>
-              </Routes>
-              <Toaster
-                position="top-right"
-                toastOptions={{
-                  duration: 4000,
-                  style: {
-                    background: "#363636",
-                    color: "#fff",
+                {/* 404 Route */}
+                <Route path="*" element={<NotFound />} />
+              </Route>
+            </Routes>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                style: {
+                  background: "#363636",
+                  color: "#fff",
+                },
+                success: {
+                  duration: 3000,
+                  iconTheme: {
+                    primary: "#10b981",
+                    secondary: "#fff",
                   },
-                  success: {
-                    duration: 3000,
-                    iconTheme: {
-                      primary: "#10b981",
-                      secondary: "#fff",
-                    },
+                },
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: "#ef4444",
+                    secondary: "#fff",
                   },
-                  error: {
-                    duration: 5000,
-                    iconTheme: {
-                      primary: "#ef4444",
-                      secondary: "#fff",
-                    },
-                  },
-                }}
-              />
-            </div>
-          </Router>
+                },
+              }}
+            />
+          </div>
         </AuthProvider>
       </ThemeProvider>
     </HelmetProvider>

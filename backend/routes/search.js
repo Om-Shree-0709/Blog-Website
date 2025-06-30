@@ -1,7 +1,7 @@
-const express = require("express");
-const Post = require("../models/Post");
-const User = require("../models/User");
-const { validateSearch } = require("../middleware/validation");
+import express from "express";
+import Post from "../models/Post.js";
+import User from "../models/User.js";
+import { validateSearch } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -103,9 +103,9 @@ router.get("/posts", async (req, res) => {
 // @access  Public
 router.get("/users", validateSearch, async (req, res) => {
   try {
-    const { query, page = 1, limit = 10 } = req.query;
+    const { q, page = 1, limit = 10 } = req.query;
 
-    if (!query || query.trim().length < 2) {
+    if (!q || q.trim().length < 2) {
       return res
         .status(400)
         .json({ message: "Search query must be at least 2 characters long" });
@@ -113,8 +113,8 @@ router.get("/users", validateSearch, async (req, res) => {
 
     const searchQuery = {
       $or: [
-        { username: { $regex: query, $options: "i" } },
-        { bio: { $regex: query, $options: "i" } },
+        { username: { $regex: q, $options: "i" } },
+        { bio: { $regex: q, $options: "i" } },
       ],
     };
 
@@ -128,7 +128,7 @@ router.get("/users", validateSearch, async (req, res) => {
 
     res.json({
       users,
-      query,
+      query: q,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(total / limit),
@@ -148,11 +148,11 @@ router.get("/users", validateSearch, async (req, res) => {
 // @access  Public
 router.get("/tags", async (req, res) => {
   try {
-    const { query, limit = 20 } = req.query;
+    const { q, limit = 20 } = req.query;
 
     let searchQuery = {};
-    if (query && query.trim()) {
-      searchQuery = { tags: { $regex: query, $options: "i" } };
+    if (q && q.trim()) {
+      searchQuery = { tags: { $regex: q, $options: "i" } };
     }
 
     // Get all posts with tags
@@ -192,7 +192,7 @@ router.get("/categories", async (req, res) => {
       { $match: { isPublished: true } },
       { $group: { _id: "$category", count: { $sum: 1 } } },
       { $sort: { count: -1 } },
-      { $project: { category: "$_id", count: 1, _id: 0 } },
+      { $project: { name: "$_id", count: 1, _id: 0 } },
     ]);
 
     res.json({ categories });
@@ -205,44 +205,74 @@ router.get("/categories", async (req, res) => {
 // @route   GET /api/search/global
 // @desc    Global search across posts and users
 // @access  Public
-router.get("/global", validateSearch, async (req, res) => {
+router.get("/global", async (req, res) => {
   try {
-    const { query, page = 1, limit = 10 } = req.query;
+    const { q, page = 1, limit = 10 } = req.query;
 
-    if (!query || query.trim().length < 2) {
+    if (!q || q.trim().length < 2) {
       return res
         .status(400)
         .json({ message: "Search query must be at least 2 characters long" });
     }
 
+    const searchQuery = q.trim();
+
     // Search posts
-    const posts = await Post.find({
-      $text: { $search: query },
-      isPublished: true,
-    })
+    const postsQuery = {
+      $and: [
+        { isPublished: true },
+        {
+          $or: [
+            { title: { $regex: searchQuery, $options: "i" } },
+            { content: { $regex: searchQuery, $options: "i" } },
+            { excerpt: { $regex: searchQuery, $options: "i" } },
+            { tags: { $in: [new RegExp(searchQuery, "i")] } },
+          ],
+        },
+      ],
+    };
+
+    const posts = await Post.find(postsQuery)
+      .select(
+        "title excerpt slug featuredImage readTime viewCount createdAt category tags"
+      )
       .populate("author", "username avatar")
-      .sort({ score: { $meta: "textScore" } })
-      .limit(Math.ceil(limit / 2))
-      .exec();
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
 
     // Search users
-    const users = await User.find({
+    const usersQuery = {
       $or: [
-        { username: { $regex: query, $options: "i" } },
-        { bio: { $regex: query, $options: "i" } },
+        { username: { $regex: searchQuery, $options: "i" } },
+        { bio: { $regex: searchQuery, $options: "i" } },
       ],
-    })
-      .select("username avatar bio role")
-      .limit(Math.ceil(limit / 2))
-      .exec();
+    };
+
+    const users = await User.find(usersQuery)
+      .select("username avatar bio role createdAt")
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .lean();
+
+    // Get total counts
+    const totalPosts = await Post.countDocuments(postsQuery);
+    const totalUsers = await User.countDocuments(usersQuery);
 
     res.json({
-      query,
-      results: {
-        posts,
-        users,
+      posts,
+      users,
+      query: searchQuery,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(Math.max(totalPosts, totalUsers) / limit),
+        totalPosts,
+        totalUsers,
+        hasNextPage: page * limit < Math.max(totalPosts, totalUsers),
+        hasPrevPage: page > 1,
       },
-      totalResults: posts.length + users.length,
     });
   } catch (error) {
     console.error("Global search error:", error);
@@ -320,4 +350,4 @@ router.get("/suggestions", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

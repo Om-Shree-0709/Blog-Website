@@ -1,11 +1,8 @@
-const express = require("express");
-const Comment = require("../models/Comment");
-const Post = require("../models/Post");
-const { protect, ownerOrAdmin } = require("../middleware/auth");
-const {
-  validateComment,
-  validateObjectId,
-} = require("../middleware/validation");
+import express from "express";
+import Comment from "../models/Comment.js";
+import Post from "../models/Post.js";
+import { protect, ownerOrAdmin } from "../middleware/auth.js";
+import { validateComment, validateId } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -58,7 +55,7 @@ router.post("/", protect, validateComment, async (req, res) => {
 // @route   PUT /api/comments/:id
 // @desc    Update a comment
 // @access  Private (owner or admin)
-router.put("/:id", protect, validateObjectId, async (req, res) => {
+router.put("/:id", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -106,7 +103,7 @@ router.put("/:id", protect, validateObjectId, async (req, res) => {
 // @route   DELETE /api/comments/:id
 // @desc    Delete a comment
 // @access  Private (owner or admin)
-router.delete("/:id", protect, validateObjectId, async (req, res) => {
+router.delete("/:id", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -140,7 +137,7 @@ router.delete("/:id", protect, validateObjectId, async (req, res) => {
 // @route   POST /api/comments/:id/like
 // @desc    Toggle like on a comment
 // @access  Private
-router.post("/:id/like", protect, validateObjectId, async (req, res) => {
+router.post("/:id/like", protect, validateId, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -164,7 +161,7 @@ router.post("/:id/like", protect, validateObjectId, async (req, res) => {
 // @route   GET /api/comments/:id/replies
 // @desc    Get replies for a comment
 // @access  Public
-router.get("/:id/replies", validateObjectId, async (req, res) => {
+router.get("/:id/replies", validateId, async (req, res) => {
   try {
     const { id } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -199,7 +196,7 @@ router.get("/:id/replies", validateObjectId, async (req, res) => {
 // @route   GET /api/comments/user/:userId
 // @desc    Get all comments by a user
 // @access  Public
-router.get("/user/:userId", validateObjectId, async (req, res) => {
+router.get("/user/:userId", async (req, res) => {
   try {
     const { userId } = req.params;
     const { page = 1, limit = 10 } = req.query;
@@ -229,4 +226,4 @@ router.get("/user/:userId", validateObjectId, async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

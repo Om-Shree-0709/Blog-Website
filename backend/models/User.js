@@ -98,8 +98,6 @@ userSchema.virtual("followingCount", {
 });
 
 // Add indexes for better performance
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 
 // Text search index

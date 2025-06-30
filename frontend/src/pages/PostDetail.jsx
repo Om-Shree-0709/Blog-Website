@@ -18,6 +18,9 @@ const PostDetail = () => {
   const [error, setError] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
 
   const fetchComments = useCallback(async () => {
     if (!post) return;
@@ -53,21 +56,26 @@ const PostDetail = () => {
     }
   }, [post, fetchComments]);
 
+  useEffect(() => {
+    if (post && user) {
+      setIsLiked(post.likes?.includes(user._id));
+      setIsBookmarked(user.bookmarks?.includes(post._id));
+      setLikeCount(post.likeCount || 0);
+    }
+  }, [post, user]);
+
   const handleLike = async () => {
     if (!isAuthenticated) {
       toast.error("Please login to like posts");
       return;
     }
-
+    setIsLiked((prev) => !prev);
+    setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
     try {
       await api.post(`/posts/${post._id}/like`);
-      setPost((prev) => ({
-        ...prev,
-        likes: prev.likes.includes(user._id)
-          ? prev.likes.filter((id) => id !== user._id)
-          : [...prev.likes, user._id],
-      }));
     } catch (err) {
+      setIsLiked((prev) => !prev);
+      setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
       toast.error("Failed to like post");
     }
   };
@@ -77,11 +85,11 @@ const PostDetail = () => {
       toast.error("Please login to bookmark posts");
       return;
     }
-
+    setIsBookmarked((prev) => !prev);
     try {
-      await api.post(`/users/${user._id}/bookmark/${post._id}`);
-      toast.success("Bookmark updated");
+      await api.post(`/posts/${post._id}/bookmark`);
     } catch (err) {
+      setIsBookmarked((prev) => !prev);
       toast.error("Failed to update bookmark");
     }
   };
@@ -144,9 +152,6 @@ const PostDetail = () => {
       </div>
     );
   }
-
-  const isLiked = user && post.likes?.includes(user._id);
-  const isBookmarked = user && user.bookmarks?.includes(post._id);
 
   return (
     <>
@@ -253,7 +258,7 @@ const PostDetail = () => {
                 }`}
               >
                 <Heart className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`} />
-                <span>{post.likeCount || 0}</span>
+                <span>{likeCount}</span>
               </button>
 
               {isAuthenticated && (
