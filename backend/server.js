@@ -8,6 +8,12 @@ import app from "./app.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+const frontendBuildPath = path.join(__dirname, "frontend/build");
+app.use(express.static(frontendBuildPath));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(frontendBuildPath, "index.html"));
+});
+
 // Load environment variables
 dotenv.config({ path: path.join(__dirname, ".env") });
 
