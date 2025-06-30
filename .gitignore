@@ -3,6 +3,8 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+one.txt
+CHANGES_SUMMARY.md
 
 # Environment variables
 .env

@@ -90,7 +90,6 @@ const Home = () => {
   // Refresh posts when user returns to home page
   useEffect(() => {
     const handleFocus = () => {
-      // Refresh posts when user returns to the tab/window
       fetchPosts();
     };
 
@@ -98,19 +97,7 @@ const Home = () => {
     return () => window.removeEventListener("focus", handleFocus);
   }, [fetchPosts]);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
   const handleStartWriting = () => {
-    if (isAuthenticated) {
-      navigate("/create-post");
-    } else {
-      navigate("/signup");
-    }
-  };
-
-  const handleGetStarted = () => {
     if (isAuthenticated) {
       navigate("/create-post");
     } else {
@@ -157,7 +144,7 @@ const Home = () => {
               onClick={handleStartWriting}
               className="btn-outline text-lg px-8 py-3"
             >
-              {isAuthenticated ? "Start Writing" : "Start Writing"}
+              Start Writing
             </button>
           </div>
         </div>
@@ -204,27 +191,9 @@ const Home = () => {
               </section>
             )}
 
-            {/* Categories */}
-            {categories.length > 0 && (
-              <section className="mb-12">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-                  Explore by Category
-                </h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                  {categories.map((category) => (
-                    <CategoryCard
-                      key={category.category}
-                      category={category.category}
-                      count={category.count}
-                    />
-                  ))}
-                </div>
-              </section>
-            )}
-
             {/* Latest Posts */}
             {posts.length > 0 && (
-              <section>
+              <section className="mb-12">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Latest Stories
@@ -243,35 +212,35 @@ const Home = () => {
                 </div>
               </section>
             )}
+
+            {/* Categories */}
+            {categories.length > 0 && (
+              <section className="mb-12">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+                  Explore Categories
+                </h2>
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {categories.map((category) => (
+                    <CategoryCard key={category.name} category={category} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Load More Button */}
+            {pagination.hasNextPage && (
+              <div className="text-center">
+                <button
+                  onClick={() => fetchPosts(pagination.currentPage + 1)}
+                  className="btn-outline"
+                  disabled={loading}
+                >
+                  {loading ? "Loading..." : "Load More Posts"}
+                </button>
+              </div>
+            )}
           </>
         )}
-
-        {/* Call to Action */}
-        <section className="mt-16 text-center">
-          <div className="bg-gradient-to-r from-primary-600 to-primary-700 rounded-2xl p-8 md:p-12">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to Share Your Story?
-            </h2>
-            <p className="text-primary-100 mb-8 text-lg max-w-2xl mx-auto">
-              Join thousands of writers who are already sharing their knowledge,
-              experiences, and insights with the world.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button
-                onClick={handleGetStarted}
-                className="bg-white text-primary-600 hover:bg-gray-100 px-8 py-3 rounded-lg font-medium transition-colors"
-              >
-                Get Started
-              </button>
-              <Link
-                to="/search"
-                className="border-2 border-white text-white hover:bg-white hover:text-primary-600 px-8 py-3 rounded-lg font-medium transition-colors"
-              >
-                Explore More
-              </Link>
-            </div>
-          </div>
-        </section>
       </div>
     </>
   );

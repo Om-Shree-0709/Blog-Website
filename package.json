@@ -10,7 +10,7 @@
     "build": "cd frontend && npm run build",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "start": "cd backend && npm start",
-    "heroku-postbuild": "cd frontend && npm install && npm run build"
+    "render-postbuild": "cd frontend && npm install && npm run build"
   },
   "keywords": [
     "mern",

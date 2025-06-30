@@ -1,25 +1,28 @@
-const express = require("express");
-const cors = require("cors");
-const helmet = require("helmet");
-const compression = require("compression");
-const rateLimit = require("express-rate-limit");
-const mongoose = require("mongoose");
-const path = require("path");
-const mongoSanitize = require("express-mongo-sanitize");
-const xss = require("xss-clean");
-const hpp = require("hpp");
-require("dotenv").config();
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
+import mongoose from "mongoose";
+import path from "path";
+import mongoSanitize from "express-mongo-sanitize";
+import xss from "xss-clean";
+import hpp from "hpp";
+import dotenv from "dotenv";
 
-// Routes
-const authRoutes = require("./routes/auth");
-const userRoutes = require("./routes/users");
-const postRoutes = require("./routes/posts");
-const commentRoutes = require("./routes/comments");
-const searchRoutes = require("./routes/search");
+// Load environment variables
+dotenv.config();
+
+// Import routes
+import authRoutes from "./routes/auth.js";
+import userRoutes from "./routes/users.js";
+import postRoutes from "./routes/posts.js";
+import commentRoutes from "./routes/comments.js";
+import searchRoutes from "./routes/search.js";
 
 const app = express();
 
-// Trust proxy (important if behind a load balancer)
+// Trust proxy for production
 app.set("trust proxy", 1);
 
 // Security middleware
@@ -44,7 +47,7 @@ app.use(
   })
 );
 
-// Rate limiting - disabled for development
+// Rate limiting for production
 if (process.env.NODE_ENV === "production") {
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -63,33 +66,44 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 // Compression middleware
 app.use(compression());
 
-// Sanitize data
+// Security middleware
 app.use(mongoSanitize());
-
-// Prevent XSS attacks
 app.use(xss());
-
-// Prevent http param pollution
 app.use(hpp());
 
-// CORS
-app.use(
-  cors({
-    origin: ["http://localhost:3000", "http://127.0.0.1:3000"],
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  })
-);
+// CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
 
-// Routes
+    const allowedOrigins = [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      process.env.CORS_ORIGIN,
+    ].filter(Boolean);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+};
+
+app.use(cors(corsOptions));
+
+// API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
 
-// Health check
+// Health check endpoint
 app.get("/api/health", async (req, res) => {
   try {
     if (mongoose.connection.readyState !== 1) {
@@ -111,12 +125,11 @@ app.get("/api/health", async (req, res) => {
 
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
-  // Serve static files from the React app build directory
-  app.use(express.static(path.join(__dirname, "../frontend/build")));
+  app.use(express.static(path.join(process.cwd(), "frontend/build")));
 
   // Handle React routing, return all requests to React app
   app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/build", "index.html"));
+    res.sendFile(path.join(process.cwd(), "frontend/build", "index.html"));
   });
 } else {
   // 404 handler for development
@@ -134,4 +147,4 @@ app.use((err, req, res, next) => {
   });
 });
 
-module.exports = app;
+export default app;

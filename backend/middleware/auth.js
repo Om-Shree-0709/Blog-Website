@@ -1,5 +1,5 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
+import jwt from "jsonwebtoken";
+import User from "../models/User.js";
 
 // Middleware to protect routes
 const protect = async (req, res, next) => {
@@ -36,42 +36,36 @@ const protect = async (req, res, next) => {
   }
 };
 
-// Middleware to check if user is admin
+// Middleware to restrict to admin users
 const admin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     next();
   } else {
-    return res
-      .status(403)
-      .json({ message: "Access denied. Admin role required." });
+    res.status(403).json({ message: "Access denied. Admin only." });
   }
 };
 
-// Middleware to check if user is author or admin
+// Middleware to restrict to authors and admins
 const author = (req, res, next) => {
-  if (req.user) {
+  if (req.user && (req.user.role === "author" || req.user.role === "admin")) {
     next();
   } else {
-    return res
+    res
       .status(403)
-      .json({ message: "Access denied. Authentication required." });
+      .json({ message: "Access denied. Authors and admins only." });
   }
 };
 
-// Middleware to check if user owns the resource or is admin
-const ownerOrAdmin = (resourceUserId) => {
-  return (req, res, next) => {
-    if (
-      req.user.role === "admin" ||
-      req.user._id.toString() === resourceUserId.toString()
-    ) {
-      next();
-    } else {
-      return res.status(403).json({
-        message: "Access denied. You can only modify your own resources.",
-      });
-    }
-  };
+// Middleware to check if user is owner or admin
+const ownerOrAdmin = (req, res, next) => {
+  if (
+    req.user &&
+    (req.user.role === "admin" || req.user._id.toString() === req.params.id)
+  ) {
+    next();
+  } else {
+    res.status(403).json({ message: "Access denied." });
+  }
 };
 
 // Optional auth middleware (doesn't fail if no token)
@@ -95,10 +89,4 @@ const optionalAuth = async (req, res, next) => {
   next();
 };
 
-module.exports = {
-  protect,
-  admin,
-  author,
-  ownerOrAdmin,
-  optionalAuth,
-};
+export { protect, admin, author, ownerOrAdmin, optionalAuth };

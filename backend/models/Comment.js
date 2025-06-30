@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const commentSchema = new mongoose.Schema(
   {
@@ -115,4 +115,4 @@ commentSchema.statics.getRepliesForComment = function (commentId) {
     .sort({ createdAt: 1 });
 };
 
-module.exports = mongoose.model("Comment", commentSchema);
+export default mongoose.model("Comment", commentSchema);

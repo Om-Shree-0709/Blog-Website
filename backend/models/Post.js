@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const slugify = require("slugify");
+import mongoose from "mongoose";
+import slugify from "slugify";
 
 const postSchema = new mongoose.Schema(
   {
@@ -245,4 +245,4 @@ postSchema.statics.searchPosts = function (query) {
     .sort({ score: { $meta: "textScore" } });
 };
 
-module.exports = mongoose.model("Post", postSchema);
+export default mongoose.model("Post", postSchema);
