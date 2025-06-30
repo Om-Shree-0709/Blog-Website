@@ -115,13 +115,14 @@ app.get("/api/health", async (req, res) => {
       message: "InkWell API and database are running",
       timestamp: new Date().toISOString(),
     });
-  } catch (error) {
-    res.status(500).json({
-      status: "FAIL",
-      message: error.message || "Health check failed",
-      timestamp: new Date().toISOString(),
-    });
+  } catch (err) {
+    console.error(err); // This will show up in Vercel logs
+    res.status(500).json({ message: "Server error" });
   }
+});
+
+app.get("/", (req, res) => {
+  res.json({ message: "API is running" });
 });
 
 // // Serve static files in production
