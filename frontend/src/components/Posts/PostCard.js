@@ -8,7 +8,6 @@ import toast from "react-hot-toast";
 
 const PostCard = ({ post, featured = false }) => {
   const { user, isAuthenticated } = useAuth();
-  const [likes, setLikes] = useState(post.likes || []);
   const [likeCount, setLikeCount] = useState(post.likeCount || 0);
   const [isLiked, setIsLiked] = useState(
     user && post.likes?.includes(user._id)

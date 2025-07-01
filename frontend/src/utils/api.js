@@ -6,7 +6,7 @@ const api = axios.create({
   baseURL:
     process.env.NODE_ENV === "production"
       ? "/api"
-      : process.env.REACT_APP_API_UR,
+      : process.env.REACT_APP_API_URL || "http://localhost:5000/api", // fallback for dev
   timeout: 30000,
 });
 
@@ -17,46 +17,55 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    console.log("🔼 API Request:", {
+      url: config.url,
+      method: config.method,
+      headers: config.headers,
+      data: config.data,
+    });
     return config;
   },
   (error) => {
+    console.error("❌ Request setup error:", error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log("✅ API Response:", {
+      url: response.config.url,
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
   (error) => {
-    // Log error details for debugging
-    console.error("API Error:", {
+    console.error("🔥 API Error:", {
       message: error.message,
       code: error.code,
       status: error.response?.status,
       statusText: error.response?.statusText,
       url: error.config?.url,
       method: error.config?.method,
+      data: error.response?.data,
     });
 
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       toast.error("Session expired. Please log in again.");
       window.location.href = "/login";
-    }
-
-    // Handle rate limiting
-    if (error.response?.status === 429) {
+    } else if (error.response?.status === 429) {
       toast.error("Too many requests. Please wait a moment and try again.");
-    }
-
-    // Handle network errors
-    if (error.code === "ERR_NETWORK") {
+    } else if (error.code === "ERR_NETWORK") {
       toast.error("Network error. Please check your connection and try again.");
-    }
-
-    // Handle timeout errors
-    if (error.code === "ECONNABORTED") {
+    } else if (error.code === "ECONNABORTED") {
       toast.error("Request timed out. Please try again.");
+    } else if (error.response?.data?.message) {
+      toast.error(error.response.data.message);
+    } else {
+      toast.error("An unexpected error occurred. Please try again.");
     }
 
     return Promise.reject(error);
