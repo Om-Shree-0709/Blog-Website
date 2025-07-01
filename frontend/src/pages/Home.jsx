@@ -57,15 +57,27 @@ const Home = () => {
 
         // Fetch latest posts
         const postsResponse = await api.get("/posts?limit=6");
-        setPosts(postsResponse.data.posts);
+        setPosts(
+          Array.isArray(postsResponse.data?.posts)
+            ? postsResponse.data.posts
+            : []
+        );
 
         // Fetch featured posts
         const featuredResponse = await api.get("/posts?limit=3&sort=popular");
-        setFeaturedPosts(featuredResponse.data.posts);
+        setFeaturedPosts(
+          Array.isArray(featuredResponse.data?.posts)
+            ? featuredResponse.data.posts
+            : []
+        );
 
         // Fetch categories
         const categoriesResponse = await api.get("/search/categories");
-        setCategories(categoriesResponse.data.categories);
+        setCategories(
+          Array.isArray(categoriesResponse.data?.categories)
+            ? categoriesResponse.data.categories
+            : []
+        );
       } catch (err) {
         let message = "Failed to load posts";
         if (err.response?.data?.message) {
