@@ -1,6 +1,6 @@
 import serverless from "serverless-http";
 import mongoose from "mongoose";
-import app from "../backend/server.js";
+import app from "../server.js";
 
 const mongoOptions = {
   maxPoolSize: 10,
