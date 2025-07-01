@@ -58,8 +58,12 @@ api.interceptors.response.use(
       toast.error("Too many requests. Please wait a moment and try again.");
     } else if (error.code === "ERR_NETWORK") {
       toast.error("Network error. Please check your connection and try again.");
-    } else if (error.code === "ECONNABORTED") {
-      toast.error("Request timed out. Please try again.");
+    } else if (
+      error.code === "ECONNABORTED" ||
+      error.message === "Request aborted"
+    ) {
+      // Optionally: console.log('Request was aborted, ignoring.');
+      return;
     } else if (error.response?.data?.message) {
       toast.error(error.response.data.message);
     } else {
