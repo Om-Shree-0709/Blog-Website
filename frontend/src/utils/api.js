@@ -5,7 +5,7 @@ import toast from "react-hot-toast";
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL,
   timeout: 60000,
-  withCredentials: true,
+  withCredentials: false,
 });
 
 // Request interceptor to add auth token
