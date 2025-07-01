@@ -103,15 +103,6 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
 
-// Catch-all 405 handler for unsupported HTTP methods on /api/*
-app.all("/api/*", (req, res) => {
-  res
-    .status(405)
-    .json({
-      message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
-    });
-});
-
 // Health check endpoint
 app.get("/api/health", async (req, res) => {
   try {
@@ -133,20 +124,14 @@ app.get("/", (req, res) => {
   res.json({ message: "API is running" });
 });
 
-// // Serve static files in production
-// if (process.env.NODE_ENV === "production") {
-//   app.use(express.static(path.join(process.cwd(), "frontend/build")));
-
-//   // Handle React routing, return all requests to React app
-//   app.get("*", (req, res) => {
-//     res.sendFile(path.join(process.cwd(), "frontend/build", "index.html"));
-//   });
-// } else {
-//   // 404 handler for development
-//   app.use("*", (req, res) => {
-//     res.status(404).json({ message: "Route not found" });
-//   });
-// }
+// Catch-all 405 handler for unsupported HTTP methods on /api/*
+app.all("/api/*", (req, res) => {
+  res
+    .status(405)
+    .json({
+      message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
+    });
+});
 
 // Global error handler
 app.use((err, req, res, next) => {

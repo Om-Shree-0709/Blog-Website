@@ -1,6 +1,6 @@
 import serverless from "serverless-http";
 import mongoose from "mongoose";
-import app from "../server.js";
+import app from "../app.js";
 
 const mongoOptions = {
   maxPoolSize: 10,
@@ -15,14 +15,17 @@ let isConnected = false;
 
 const connectDB = async () => {
   if (isConnected) return;
+
   let mongoUri = process.env.MONGODB_URI;
   if (!mongoUri.includes("/inkwell")) {
     mongoUri = mongoUri.endsWith("/")
       ? mongoUri + "inkwell"
       : mongoUri + "/inkwell";
   }
+
   await mongoose.connect(mongoUri, mongoOptions);
   isConnected = true;
+  console.log("✅ Connected to MongoDB (Vercel)");
 };
 
 export default async function handler(req, res) {
