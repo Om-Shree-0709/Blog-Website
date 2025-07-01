@@ -47,10 +47,29 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // CORS
+
+app.use(cors(corsOptions));
+// CORS Configuration
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://inkwell-frontend-gzou.onrender.com", // ✅ replace with your real frontend Render domain
+];
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "*",
+  origin: function (origin, callback) {
+    // Allow non-browser tools (Postman, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
+
 app.use(cors(corsOptions));
 
 // API routes
