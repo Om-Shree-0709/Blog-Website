@@ -1,6 +1,6 @@
 import serverless from "serverless-http";
 import mongoose from "mongoose";
-import app from "../app.js";
+import app from "../server.js";
 
 const mongoOptions = {
   maxPoolSize: 10,
@@ -15,17 +15,14 @@ let isConnected = false;
 
 const connectDB = async () => {
   if (isConnected) return;
-
   let mongoUri = process.env.MONGODB_URI;
   if (!mongoUri.includes("/inkwell")) {
     mongoUri = mongoUri.endsWith("/")
       ? mongoUri + "inkwell"
       : mongoUri + "/inkwell";
   }
-
   await mongoose.connect(mongoUri, mongoOptions);
   isConnected = true;
-  console.log("✅ Connected to MongoDB (Vercel)");
 };
 
 export default async function handler(req, res) {
@@ -33,7 +30,7 @@ export default async function handler(req, res) {
     await connectDB();
     return serverless(app)(req, res);
   } catch (err) {
-    console.error("❌ Mongo connection error:", err);
+    console.error("❌ DB connect error:", err);
     res.status(500).json({ message: "Database connection failed" });
   }
 }

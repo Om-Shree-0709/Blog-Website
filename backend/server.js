@@ -1,17 +1,32 @@
-import path from "path";
-import { fileURLToPath } from "url";
+import mongoose from "mongoose";
 import dotenv from "dotenv";
 import app from "./app.js";
-import mongoose from "mongoose";
+import path from "path";
+import { fileURLToPath } from "url";
 
+// ES6 __dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Load environment variables
 dotenv.config({ path: path.join(__dirname, ".env") });
 
-const PORT = process.env.PORT || 5000;
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "development";
+}
 
-// MongoDB connect (local run)
+if (!process.env.MONGODB_URI) {
+  console.error("❌ MONGODB_URI not defined");
+  process.exit(1);
+}
+
+let mongoUri = process.env.MONGODB_URI;
+if (!mongoUri.includes("/inkwell")) {
+  mongoUri = mongoUri.endsWith("/")
+    ? mongoUri + "inkwell"
+    : mongoUri + "/inkwell";
+}
+
 const mongoOptions = {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
@@ -21,19 +36,14 @@ const mongoOptions = {
   w: "majority",
 };
 
-const connectDB = async () => {
-  let mongoUri = process.env.MONGODB_URI;
-  if (!mongoUri.includes("/inkwell")) {
-    mongoUri = mongoUri.endsWith("/")
-      ? mongoUri + "inkwell"
-      : mongoUri + "/inkwell";
-  }
-  await mongoose.connect(mongoUri, mongoOptions);
-  console.log("✅ Connected to MongoDB");
-};
-
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`🚀 Server running at http://localhost:${PORT}`);
+mongoose
+  .connect(mongoUri, mongoOptions)
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+    process.exit(1);
   });
-});
+
+export default app;

@@ -3,15 +3,13 @@ import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
-import mongoose from "mongoose";
-import path from "path";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import hpp from "hpp";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import dotenv from "dotenv";
 
-// Load environment variables
+// Load env
 dotenv.config();
 
 // Import routes
@@ -22,121 +20,64 @@ import commentRoutes from "./routes/comments.js";
 import searchRoutes from "./routes/search.js";
 
 const app = express();
-
-// Trust proxy for production
 app.set("trust proxy", 1);
 
 // Security middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:"],
-        scriptSrc: ["'self'"],
-        baseUri: ["'self'"],
-        formAction: ["'self'"],
-        frameAncestors: ["'self'"],
-        objectSrc: ["'none'"],
-        scriptSrcAttr: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-    crossOriginEmbedderPolicy: false,
-  })
-);
-
-// Rate limiting for production
-if (process.env.NODE_ENV === "production") {
-  const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
-    message: "Too many requests from this IP, please try again later.",
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-  app.use("/api/", limiter);
-}
-
-// Body parser middleware
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-
-// Compression middleware
+app.use(helmet());
 app.use(compression());
-
-// Security middleware
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
+
+// Cookie parser
 app.use(cookieParser());
-// CORS configuration
+
+// Body parsers
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Rate limiter
+if (process.env.NODE_ENV === "production") {
+  app.use(
+    "/api/",
+    rateLimit({
+      windowMs: 15 * 60 * 1000,
+      max: process.env.RATE_LIMIT_MAX_REQUESTS || 100,
+      message: "Too many requests, try again later.",
+    })
+  );
+}
+
+// CORS
+const allowedOrigins = [process.env.CORS_ORIGIN].filter(Boolean);
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      "http://localhost:3000",
-      "http://127.0.0.1:3000",
-      process.env.CORS_ORIGIN,
-    ].filter(Boolean);
-
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
-
 app.use(cors(corsOptions));
 
-// API Routes
+// Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
 
-// Health check endpoint
-app.get("/api/health", async (req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1) {
-      throw new Error("Database not connected");
-    }
-    res.status(200).json({
-      status: "OK",
-      message: "InkWell API and database are running",
-      timestamp: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.error(err); // This will show up in Vercel logs
-    res.status(500).json({ message: "Server error" });
-  }
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", message: "API is running" });
 });
 
 app.get("/", (req, res) => {
-  res.send(`
-    <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">
-      <h1>Your Backend working perfectly 🚀🎉</h1>
-    </div>
-  `);
+  res.send("Your Backend working perfectly 🚀🎉");
 });
 
-// Catch-all 405 handler for unsupported HTTP methods on /api/*
-app.all("/api/*", (req, res) => {
-  res.status(405).json({
-    message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
-  });
-});
-
-// Global error handler
+// Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
