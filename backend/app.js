@@ -20,6 +20,12 @@ dotenv.config();
 
 const app = express();
 
+// ✅ Move this up BEFORE using it
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN || "*",
+  credentials: true,
+};
+
 // Trust proxy (for Render)
 app.set("trust proxy", 1);
 
@@ -46,30 +52,7 @@ if (process.env.NODE_ENV === "production") {
   app.use("/api/", limiter);
 }
 
-// CORS
-
-app.use(cors(corsOptions));
-// CORS Configuration
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://inkwell-frontend-gzou.onrender.com", // ✅ replace with your real frontend Render domain
-];
-
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow non-browser tools (Postman, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
+// ✅ Now use CORS after it's declared
 app.use(cors(corsOptions));
 
 // API routes
