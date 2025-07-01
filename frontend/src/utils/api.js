@@ -3,11 +3,9 @@ import toast from "react-hot-toast";
 
 // Create axios instance with base URL
 const api = axios.create({
-  baseURL:
-    process.env.NODE_ENV === "production"
-      ? process.env.REACT_APP_API_URL
-      : "http://localhost:5000/api",
+  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
   timeout: 30000,
+  withCredentials: true, // if needed for cookies
 });
 
 // Request interceptor to add auth token
