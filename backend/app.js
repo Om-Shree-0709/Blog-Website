@@ -6,78 +6,83 @@ import rateLimit from "express-rate-limit";
 import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import hpp from "hpp";
-import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
+import path from "path";
+import mongoose from "mongoose";
 
-// Load env
-dotenv.config();
-
-// Import routes
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import commentRoutes from "./routes/comments.js";
 import searchRoutes from "./routes/search.js";
 
+dotenv.config();
+
 const app = express();
+
+// Trust proxy (for Render)
 app.set("trust proxy", 1);
 
 // Security middleware
 app.use(helmet());
-app.use(compression());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
 
-// Cookie parser
-app.use(cookieParser());
-
-// Body parsers
+// Body parser
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Rate limiter
+// Compression
+app.use(compression());
+
+// Rate limiting in production
 if (process.env.NODE_ENV === "production") {
-  app.use(
-    "/api/",
-    rateLimit({
-      windowMs: 15 * 60 * 1000,
-      max: process.env.RATE_LIMIT_MAX_REQUESTS || 100,
-      message: "Too many requests, try again later.",
-    })
-  );
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100,
+    message: "Too many requests from this IP, please try again later.",
+  });
+  app.use("/api/", limiter);
 }
 
 // CORS
-const allowedOrigins = [process.env.CORS_ORIGIN].filter(Boolean);
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: process.env.CORS_ORIGIN || "*",
   credentials: true,
 };
 app.use(cors(corsOptions));
 
-// Routes
+// API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
 
-app.get("/api/health", (req, res) => {
-  res.status(200).json({ status: "OK", message: "API is running" });
+// Health check route
+app.get("/api/health", async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      throw new Error("Database not connected");
+    }
+    res.status(200).json({
+      status: "OK",
+      message: "InkWell API and database are running",
+      timestamp: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
+// Root route
 app.get("/", (req, res) => {
-  res.send("Your Backend working perfectly 🚀🎉");
+  res.send("✅ Your Backend is working perfectly!");
 });
 
-// Error handler
+// Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(err.status || 500).json({
