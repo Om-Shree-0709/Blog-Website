@@ -1,11 +1,11 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-// Create axios instance with base URL
+// ✅ Explicitly set production backend URL
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "http://localhost:5000/api",
+  baseURL: "https://inkwell-backend-y8gj.onrender.com/api",
   timeout: 30000,
-  withCredentials: true, // if needed for cookies
+  withCredentials: true,
 });
 
 // Request interceptor to add auth token
