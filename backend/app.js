@@ -9,6 +9,7 @@ import mongoSanitize from "express-mongo-sanitize";
 import xss from "xss-clean";
 import hpp from "hpp";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
 
 // Load environment variables
 dotenv.config();
@@ -70,7 +71,7 @@ app.use(compression());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
-
+app.use(cookieParser());
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
@@ -121,16 +122,18 @@ app.get("/api/health", async (req, res) => {
 });
 
 app.get("/", (req, res) => {
-  res.json({ message: "API is running" });
+  res.send(`
+    <div style="display:flex;justify-content:center;align-items:center;height:100vh;font-family:sans-serif;">
+      <h1>Your Backend working perfectly 🚀🎉</h1>
+    </div>
+  `);
 });
 
 // Catch-all 405 handler for unsupported HTTP methods on /api/*
 app.all("/api/*", (req, res) => {
-  res
-    .status(405)
-    .json({
-      message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
-    });
+  res.status(405).json({
+    message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
+  });
 });
 
 // Global error handler
