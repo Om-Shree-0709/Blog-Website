@@ -103,6 +103,15 @@ app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
 
+// Catch-all 405 handler for unsupported HTTP methods on /api/*
+app.all("/api/*", (req, res) => {
+  res
+    .status(405)
+    .json({
+      message: `Method ${req.method} Not Allowed on ${req.originalUrl}`,
+    });
+});
+
 // Health check endpoint
 app.get("/api/health", async (req, res) => {
   try {
