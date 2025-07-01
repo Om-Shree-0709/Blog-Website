@@ -63,7 +63,7 @@ const CreatePost = () => {
     }
   };
 
-  const onSubmit = async (data) => {
+  const onSubmit = async (data, publish = false) => {
     if (!content.trim()) {
       toast.error("Please add some content to your post");
       return;
@@ -78,29 +78,25 @@ const CreatePost = () => {
         category: data.category,
         tags: tags,
         featuredImage: featuredImage,
-        isPublished: isPublished,
+        isPublished: publish,
       };
 
       const response = await api.post("/posts", postData);
 
       if (response.data && response.data.post) {
         toast.success(
-          isPublished ? "Post published successfully!" : "Post saved as draft!"
+          publish ? "Post published successfully!" : "Post saved as draft!"
         );
-
-        // Navigate to the post detail page using the slug
         navigate(`/post/${response.data.post.slug}`);
       } else {
         throw new Error("Invalid response from server");
       }
     } catch (error) {
       let message = "Failed to create post";
-
       if (
         error.response?.data?.errors &&
         Array.isArray(error.response.data.errors)
       ) {
-        // Show all validation errors from backend
         message = error.response.data.errors.map((e) => e.message).join("\n");
       } else if (error.response?.data?.message) {
         if (error.response.data.message.includes("title already exists")) {
@@ -114,7 +110,6 @@ const CreatePost = () => {
       } else if (error.message) {
         message = error.message;
       }
-
       toast.error(message);
       console.error("Post creation error:", error);
     } finally {
@@ -123,13 +118,11 @@ const CreatePost = () => {
   };
 
   const handleSaveDraft = () => {
-    setIsPublished(false);
-    handleSubmit(onSubmit)();
+    handleSubmit((data) => onSubmit(data, false))();
   };
 
   const handlePublish = () => {
-    setIsPublished(true);
-    handleSubmit(onSubmit)();
+    handleSubmit((data) => onSubmit(data, true))();
   };
 
   return (
