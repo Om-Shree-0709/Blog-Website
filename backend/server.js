@@ -3,7 +3,6 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import app from "./app.js";
-import express from "express";
 
 // ES6 module fix for __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -17,13 +16,9 @@ if (!process.env.NODE_ENV) {
   process.env.NODE_ENV = "development";
 }
 
-const PORT = parseInt(process.env.PORT, 10) || 5000;
-
 // Check MONGODB_URI
 if (!process.env.MONGODB_URI) {
   console.error("❌ MONGODB_URI is not defined in your environment!");
-  console.error("Current working directory:", process.cwd());
-  console.error("Looking for .env file at:", path.join(__dirname, ".env"));
   process.exit(1);
 }
 
@@ -37,7 +32,6 @@ if (!mongoUri.includes("/inkwell")) {
     : mongoUri + "/inkwell";
 }
 
-// MongoDB connection options for modern versions
 const mongoOptions = {
   maxPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
@@ -52,29 +46,11 @@ mongoose
   .then(() => {
     console.log("✅ Connected to MongoDB");
     console.log(`🌍 Environment: ${process.env.NODE_ENV}`);
-    app.listen(PORT, () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(
-        `📊 Health check available at: http://localhost:${PORT}/api/health`
-      );
-    });
   })
   .catch((err) => {
     console.error("❌ MongoDB connection error:", err);
     process.exit(1);
   });
 
-// Graceful shutdown
-process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down gracefully");
-  await mongoose.connection.close();
-  console.log("MongoDB connection closed");
-  process.exit(0);
-});
-
-process.on("SIGINT", async () => {
-  console.log("SIGINT received, shutting down gracefully");
-  await mongoose.connection.close();
-  console.log("MongoDB connection closed");
-  process.exit(0);
-});
+// Export app for Vercel
+export default app;
