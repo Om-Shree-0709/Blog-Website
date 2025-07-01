@@ -1,6 +1,6 @@
 import serverless from "serverless-http";
 import mongoose from "mongoose";
-import app from "../server.js";
+import app from "../app.js";
 
 const mongoOptions = {
   maxPoolSize: 10,
@@ -25,12 +25,14 @@ const connectDB = async () => {
   isConnected = true;
 };
 
-export default async function handler(req, res) {
+const handler = async (req, res) => {
   try {
     await connectDB();
     return serverless(app)(req, res);
-  } catch (err) {
-    console.error("❌ DB connect error:", err);
+  } catch (error) {
+    console.error("❌ Connection error:", error);
     res.status(500).json({ message: "Database connection failed" });
   }
-}
+};
+
+export default handler;
