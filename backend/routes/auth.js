@@ -43,6 +43,7 @@ router.post("/signup", validateSignup, async (req, res) => {
     res.status(201).json({
       message: "User registered successfully",
       user: user.getPublicProfile(),
+      token,
     });
   } catch (error) {
     console.error("Signup error:", error);
@@ -73,6 +74,7 @@ router.post("/login", validateLogin, async (req, res) => {
     res.json({
       message: "Login successful",
       user: user.getPublicProfile(),
+      token,
     });
   } catch (error) {
     console.error("Login error:", error);
