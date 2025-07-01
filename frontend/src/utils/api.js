@@ -1,9 +1,9 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-// ✅ Explicitly set production backend URL
+// ✅ Use .env value
 const api = axios.create({
-  baseURL: "https://inkwell-backend-y8gj.onrender.com/api",
+  baseURL: process.env.REACT_APP_API_URL,
   timeout: 30000,
   withCredentials: true,
 });
@@ -29,7 +29,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle errors
+// Response interceptor
 api.interceptors.response.use(
   (response) => {
     console.log("✅ API Response:", {
