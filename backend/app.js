@@ -10,7 +10,6 @@ import dotenv from "dotenv";
 import path from "path";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
-
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
