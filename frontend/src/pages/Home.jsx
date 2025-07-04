@@ -3,17 +3,19 @@ import { Link, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import PostCard from "../components/Posts/PostCard";
 import CategoryCard from "../components/UI/CategoryCard";
-import LoadingSpinner from "../components/UI/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../utils/api";
 import { BookOpen } from "lucide-react";
 import toast from "react-hot-toast";
+import HARDCODED_ARTICLES from "../utils/hardcodedArticles";
 
 const Home = () => {
-  const [posts, setPosts] = useState([]);
+  // Start with hardcoded articles for instant render
+  const [posts, setPosts] = useState(HARDCODED_ARTICLES);
   const [featuredPosts, setFeaturedPosts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // Set loading to false initially to show hardcoded articles
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -50,18 +52,18 @@ const Home = () => {
     }
   }, []);
 
+  // On mount, fetch real posts and replace hardcoded ones when loaded
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
-
         // Fetch latest posts
         const postsResponse = await api.get("/api/posts?limit=6");
-        setPosts(
-          Array.isArray(postsResponse.data?.posts)
-            ? postsResponse.data.posts
-            : []
-        );
+        if (
+          Array.isArray(postsResponse.data?.posts) &&
+          postsResponse.data.posts.length > 0
+        ) {
+          setPosts(postsResponse.data.posts);
+        }
 
         // Fetch featured posts
         const featuredResponse = await api.get(
@@ -89,11 +91,8 @@ const Home = () => {
         }
         toast.error(message);
         console.error("Error fetching data:", err);
-      } finally {
-        setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
@@ -136,19 +135,6 @@ const Home = () => {
       />
     </div>
   );
-
-  // In the render, show skeletons if loading
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <PostSkeleton key={i} />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   // Show placeholder content if no posts
   const hasPosts = posts.length > 0 || featuredPosts.length > 0;
@@ -242,7 +228,8 @@ const Home = () => {
                     View all →
                   </Link>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Posts Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {posts.map((post) => (
                     <PostCard key={post._id} post={post} />
                   ))}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Search as SearchIcon, Filter, X } from "lucide-react";
@@ -37,23 +37,23 @@ const Search = () => {
     { value: "oldest", label: "Oldest" },
   ];
 
+  // Debounce search
+  const debounceTimeout = useRef();
   useEffect(() => {
-    const fetchPosts = async () => {
-      if (!filters.query && !filters.category) {
-        setPosts([]);
-        return;
-      }
-
-      setLoading(true);
-      setError(null);
-
+    if (!filters.query && !filters.category) {
+      setPosts([]);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    if (debounceTimeout.current) clearTimeout(debounceTimeout.current);
+    debounceTimeout.current = setTimeout(async () => {
       try {
         const params = new URLSearchParams();
         if (filters.query) params.append("query", filters.query);
         if (filters.category) params.append("category", filters.category);
         if (filters.sort) params.append("sort", filters.sort);
-
-        const response = await api.get("/search/posts", { params });
+        const response = await api.get("/api/search/posts", { params });
         setPosts(response.data.posts);
       } catch (err) {
         setError("Failed to fetch search results");
@@ -61,21 +61,18 @@ const Search = () => {
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchPosts();
+    }, 1000); // 1 second debounce
+    return () => clearTimeout(debounceTimeout.current);
   }, [filters]);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    const newFilters = { ...filters };
+  // Remove form submit for search, update search params on input change
+  const handleInputChange = (e) => {
+    const newFilters = { ...filters, query: e.target.value };
     setFilters(newFilters);
-
     const params = new URLSearchParams();
     if (newFilters.query) params.set("query", newFilters.query);
     if (newFilters.category) params.set("category", newFilters.category);
     if (newFilters.sort !== "relevance") params.set("sort", newFilters.sort);
-
     setSearchParams(params);
   };
 
@@ -109,25 +106,20 @@ const Search = () => {
           </h1>
 
           {/* Search Form */}
-          <form onSubmit={handleSearch} className="mb-6">
+          <div className="mb-6">
             <div className="flex flex-col md:flex-row gap-4">
               <div className="flex-1 relative">
                 <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   value={filters.query}
-                  onChange={(e) =>
-                    setFilters({ ...filters, query: e.target.value })
-                  }
+                  onChange={handleInputChange}
                   placeholder="Search posts, authors, or tags..."
                   className="input pl-10"
                 />
               </div>
-              <button type="submit" className="btn-primary px-8">
-                Search
-              </button>
             </div>
-          </form>
+          </div>
 
           {/* Filters */}
           <div className="flex flex-wrap items-center gap-4">
