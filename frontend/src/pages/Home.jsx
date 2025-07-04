@@ -27,7 +27,7 @@ const Home = () => {
     try {
       setLoading(true);
 
-      const response = await api.get(`/posts?page=${page}&limit=6`);
+      const response = await api.get(`/api/posts?page=${page}&limit=6`);
 
       if (page === 1) {
         setPosts(response.data.posts);
@@ -56,7 +56,7 @@ const Home = () => {
         setLoading(true);
 
         // Fetch latest posts
-        const postsResponse = await api.get("/posts?limit=6");
+        const postsResponse = await api.get("/api/posts?limit=6");
         setPosts(
           Array.isArray(postsResponse.data?.posts)
             ? postsResponse.data.posts
@@ -64,7 +64,9 @@ const Home = () => {
         );
 
         // Fetch featured posts
-        const featuredResponse = await api.get("/posts?limit=3&sort=popular");
+        const featuredResponse = await api.get(
+          "/api/posts?limit=3&sort=popular"
+        );
         setFeaturedPosts(
           Array.isArray(featuredResponse.data?.posts)
             ? featuredResponse.data.posts
@@ -72,7 +74,7 @@ const Home = () => {
         );
 
         // Fetch categories
-        const categoriesResponse = await api.get("/search/categories");
+        const categoriesResponse = await api.get("/api/search/categories");
         setCategories(
           Array.isArray(categoriesResponse.data?.categories)
             ? categoriesResponse.data.categories
@@ -113,10 +115,37 @@ const Home = () => {
     }
   };
 
+  // Modern card-style shimmer skeleton loader
+  const PostSkeleton = () => (
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 w-full animate-pulse overflow-hidden">
+      <div
+        className="h-48 w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 rounded mb-4 shimmer"
+        style={{ backgroundSize: "200% 100%" }}
+      />
+      <div
+        className="h-6 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 rounded w-3/4 mb-2 shimmer"
+        style={{ backgroundSize: "200% 100%" }}
+      />
+      <div
+        className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 rounded w-1/2 mb-2 shimmer"
+        style={{ backgroundSize: "200% 100%" }}
+      />
+      <div
+        className="h-4 bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 dark:from-gray-700 dark:via-gray-800 dark:to-gray-700 rounded w-1/3 shimmer"
+        style={{ backgroundSize: "200% 100%" }}
+      />
+    </div>
+  );
+
+  // In the render, show skeletons if loading
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="xl" />
+      <div className="min-h-screen flex items-start justify-center px-4 py-8">
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <PostSkeleton key={i} />
+          ))}
+        </div>
       </div>
     );
   }

@@ -112,6 +112,7 @@ const Navbar = ({ onMenuClick }) => {
                         src={user.avatar}
                         alt={user.username}
                         className="w-8 h-8 rounded-full"
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
@@ -156,6 +157,15 @@ const Navbar = ({ onMenuClick }) => {
                         <Settings className="h-4 w-4" />
                         <span>Settings</span>
                       </Link>
+                      {user?.role === "admin" && (
+                        <Link
+                          to="/admin"
+                          className="flex items-center space-x-2 px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        >
+                          <Settings className="h-4 w-4" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      )}
                       <hr className="my-1 border-gray-200 dark:border-gray-700" />
                       <button
                         onClick={handleLogout}

@@ -52,7 +52,7 @@ const EditPost = () => {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/posts/id/${id}`);
+        const response = await api.get(`/api/posts/id/${id}`);
         const post = response.data.post;
 
         // Check if user is authorized to edit this post
@@ -125,7 +125,7 @@ const EditPost = () => {
         isPublished: shouldPublish,
       };
 
-      const response = await api.put(`/posts/${id}`, postData);
+      const response = await api.put(`/api/posts/${id}`, postData);
 
       if (response.data && response.data.post) {
         const wasDraft = !post.isPublished;
@@ -167,7 +167,7 @@ const EditPost = () => {
 
     setIsLoading(true);
     try {
-      await api.delete(`/posts/${id}`);
+      await api.delete(`/api/posts/${id}`);
       toast.success("Post deleted successfully!");
       navigate("/dashboard");
     } catch (error) {
@@ -267,6 +267,7 @@ const EditPost = () => {
                 src={featuredImage}
                 alt="Featured"
                 className="w-full h-64 object-cover rounded-lg mb-6"
+                loading="lazy"
               />
             )}
             <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -367,6 +368,7 @@ const EditPost = () => {
                     src={featuredImage}
                     alt="Featured"
                     className="w-32 h-32 object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </div>
               )}

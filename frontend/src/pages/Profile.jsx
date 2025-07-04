@@ -36,7 +36,7 @@ const Profile = () => {
     const fetchUserProfile = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/users/${username}?page=1&limit=6`);
+        const response = await api.get(`/api/users/${username}?page=1&limit=6`);
         setUser(response.data.user);
         setPosts(response.data.posts);
         setPagination(response.data.pagination);
@@ -53,7 +53,9 @@ const Profile = () => {
 
   const loadMorePosts = async (page) => {
     try {
-      const response = await api.get(`/users/${username}?page=${page}&limit=6`);
+      const response = await api.get(
+        `/api/users/${username}?page=${page}&limit=6`
+      );
       setPosts(response.data.posts);
       setPagination(response.data.pagination);
     } catch (err) {
@@ -111,6 +113,7 @@ const Profile = () => {
                   src={user.avatar}
                   alt={user.username}
                   className="w-24 h-24 rounded-full"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-24 h-24 bg-primary-600 rounded-full flex items-center justify-center">

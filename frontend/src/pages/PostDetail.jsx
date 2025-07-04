@@ -24,12 +24,14 @@ const PostDetail = () => {
 
   const fetchComments = useCallback(async () => {
     if (!post) return;
-
     try {
-      const response = await api.get(`/posts/${post._id}/comments`);
-      setComments(response.data.comments);
+      const response = await api.get(`/api/posts/${post._id}/comments`);
+      setComments(
+        Array.isArray(response.data.comments) ? response.data.comments : []
+      );
     } catch (err) {
       console.error("Error fetching comments:", err);
+      setComments([]);
     }
   }, [post]);
 
@@ -37,7 +39,7 @@ const PostDetail = () => {
     const fetchPost = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/posts/${slug}`);
+        const response = await api.get(`/api/posts/${slug}`);
         setPost(response.data.post);
       } catch (error) {
         console.error("Error fetching post:", error);
@@ -72,7 +74,7 @@ const PostDetail = () => {
     setIsLiked((prev) => !prev);
     setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
     try {
-      await api.post(`/posts/${post._id}/like`);
+      await api.post(`/api/posts/${post._id}/like`);
     } catch (err) {
       setIsLiked((prev) => !prev);
       setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
@@ -87,7 +89,7 @@ const PostDetail = () => {
     }
     setIsBookmarked((prev) => !prev);
     try {
-      await api.post(`/posts/${post._id}/bookmark`);
+      await api.post(`/api/posts/${post._id}/bookmark`);
     } catch (err) {
       setIsBookmarked((prev) => !prev);
       toast.error("Failed to update bookmark");
@@ -175,6 +177,7 @@ const PostDetail = () => {
                 src={post.featuredImage}
                 alt={post.title}
                 className="w-full h-64 md:h-96 object-cover rounded-lg"
+                loading="lazy"
               />
             </div>
           )}
@@ -330,43 +333,44 @@ const PostDetail = () => {
 
           {/* Comments List */}
           <div className="space-y-6">
-            {comments.map((comment) => (
-              <div
-                key={comment._id}
-                className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
-              >
-                <div className="flex items-start space-x-3">
-                  {comment.author?.avatar ? (
-                    <img
-                      src={comment.author.avatar}
-                      alt={comment.author.username}
-                      className="w-8 h-8 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
-                      <span className="text-white text-sm font-medium">
-                        {comment.author?.username?.charAt(0).toUpperCase()}
-                      </span>
+            {Array.isArray(comments) &&
+              comments.map((comment) => (
+                <div
+                  key={comment._id}
+                  className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4"
+                >
+                  <div className="flex items-start space-x-3">
+                    {comment.author?.avatar ? (
+                      <img
+                        src={comment.author.avatar}
+                        alt={comment.author.username}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center">
+                        <span className="text-white text-sm font-medium">
+                          {comment.author?.username?.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="font-medium text-gray-900 dark:text-white">
+                          {comment.author?.username}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
+                          {formatDistanceToNow(new Date(comment.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300">
+                        {comment.content}
+                      </p>
                     </div>
-                  )}
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-medium text-gray-900 dark:text-white">
-                        {comment.author?.username}
-                      </span>
-                      <span className="text-sm text-gray-500 dark:text-gray-400">
-                        {formatDistanceToNow(new Date(comment.createdAt), {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {comment.content}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
 
           {comments.length === 0 && (

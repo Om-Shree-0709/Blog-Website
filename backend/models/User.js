@@ -99,6 +99,9 @@ userSchema.virtual("followingCount", {
 
 // Add indexes for better performance
 userSchema.index({ role: 1 });
+userSchema.index({ email: 1 }, { unique: true });
+userSchema.index({ createdAt: -1 });
+userSchema.index({ isVerified: 1 });
 
 // Text search index
 userSchema.index({ username: "text", bio: "text" });

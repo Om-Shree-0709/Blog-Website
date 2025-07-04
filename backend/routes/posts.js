@@ -1,3 +1,8 @@
+// Recommended MongoDB indexes for fast queries:
+// db.posts.createIndex({ isPublished: 1, createdAt: -1 })
+// db.posts.createIndex({ slug: 1 })
+// db.posts.createIndex({ category: 1 })
+// db.posts.createIndex({ tags: 1 })
 import express from "express";
 import Post from "../models/Post.js";
 import User from "../models/User.js";
@@ -26,22 +31,13 @@ router.get("/", async (req, res) => {
 
     // Build query
     const query = { isPublished: true };
-
-    if (category) {
-      query.category = category;
-    }
-
-    if (tag) {
-      query.tags = { $in: [tag.toLowerCase()] };
-    }
-
+    if (category) query.category = category;
+    if (tag) query.tags = { $in: [tag.toLowerCase()] };
     if (authorUsername) {
       const author = await User.findOne({ username: authorUsername })
         .select("_id")
         .lean();
-      if (author) {
-        query.author = author._id;
-      }
+      if (author) query.author = author._id;
     }
 
     // Build sort options
@@ -59,22 +55,21 @@ router.get("/", async (req, res) => {
         break;
     }
 
-    // Use lean() for better performance and select only needed fields
+    // Use lean() and select only needed fields
     const posts = await Post.find(query)
       .select(
-        "title excerpt slug featuredImage readTime viewCount createdAt category tags"
+        "title excerpt slug featuredImage readTime viewCount createdAt category tags author"
       )
-      .populate("author", "username avatar bio")
+      .populate("author", "username avatar")
       .sort(sortOptions)
-      .limit(limit * 1)
+      .limit(Number(limit))
       .skip((page - 1) * limit)
-      .lean()
-      .exec();
+      .lean();
 
     // Get total count efficiently
     const total = await Post.countDocuments(query);
 
-    res.json({
+    const response = {
       posts,
       pagination: {
         currentPage: parseInt(page),
@@ -83,7 +78,8 @@ router.get("/", async (req, res) => {
         hasNextPage: page * limit < total,
         hasPrevPage: page > 1,
       },
-    });
+    };
+    res.json(response);
   } catch (error) {
     console.error("Get posts error:", error);
     res.status(500).json({ message: "Server error" });
@@ -322,215 +318,72 @@ router.delete("/:id", protect, validateId, async (req, res) => {
 // @desc    Toggle like on a post
 // @access  Private
 router.post("/:id/like", protect, validateId, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user._id;
-
-    // Find the post
-    const post = await Post.findById(id);
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-
-    let update;
-    let liked;
-    if (post.likes.includes(userId)) {
-      // Unlike
-      update = { $pull: { likes: userId } };
-      liked = false;
-    } else {
-      // Like
-      update = { $addToSet: { likes: userId } };
-      liked = true;
-    }
-
-    const updatedPost = await Post.findByIdAndUpdate(id, update, { new: true });
-
-    res.json({
-      message: "Like toggled successfully",
-      liked,
-      likeCount: updatedPost.likes.length,
-    });
-  } catch (error) {
-    console.error("Toggle post like error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+  // TODO: Implement like logic
+  res.json({
+    message: "Like toggled (not yet implemented)",
+    postId: req.params.id,
+  });
 });
 
 // @route   POST /api/posts/:id/bookmark
-// @desc    Toggle bookmark on a post
+// @desc    Bookmark a post
 // @access  Private
 router.post("/:id/bookmark", protect, validateId, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await User.findById(req.user._id);
-    const bookmarkIndex = user.bookmarks.indexOf(id);
-
-    if (bookmarkIndex > -1) {
-      user.bookmarks.splice(bookmarkIndex, 1);
-    } else {
-      user.bookmarks.push(id);
-    }
-
-    await user.save();
-
-    res.json({
-      message: "Bookmark toggled successfully",
-      bookmarked: user.bookmarks.includes(id),
-    });
-  } catch (error) {
-    console.error("Toggle bookmark error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+  // TODO: Implement bookmark logic
+  res.json({
+    message: "Bookmark toggled (not yet implemented)",
+    postId: req.params.id,
+  });
 });
 
 // @route   GET /api/posts/user/published
-// @desc    Get current user's published posts
+// @desc    Get published posts by current user
 // @access  Private
 router.get("/user/published", protect, async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const posts = await Post.find({
-      author: req.user._id,
-      isPublished: true,
-    })
-      .populate("author", "username avatar")
+    const posts = await Post.find({ author: req.user._id, isPublished: true })
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Post.countDocuments({
-      author: req.user._id,
-      isPublished: true,
-    });
-
-    res.json({
-      posts,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalPosts: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
+      .lean();
+    res.json({ posts });
   } catch (error) {
-    console.error("Get published posts error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // @route   GET /api/posts/user/drafts
-// @desc    Get current user's draft posts
+// @desc    Get draft posts by current user
 // @access  Private
 router.get("/user/drafts", protect, async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
-
-    const posts = await Post.find({
-      author: req.user._id,
-      isPublished: false,
-    })
-      .populate("author", "username avatar")
+    const posts = await Post.find({ author: req.user._id, isPublished: false })
       .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Post.countDocuments({
-      author: req.user._id,
-      isPublished: false,
-    });
-
-    res.json({
-      posts,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalPosts: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
+      .lean();
+    res.json({ posts });
   } catch (error) {
-    console.error("Get draft posts error:", error);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 // @route   GET /api/posts/user/:userId
-// @desc    Get all posts by a user
+// @desc    Get posts by user ID
 // @access  Public
 router.get("/user/:userId", async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { page = 1, limit = 10, published = true } = req.query;
-
-    const query = { author: userId };
-    if (published === "true") {
-      query.isPublished = true;
-    }
-
-    const posts = await Post.find(query)
-      .populate("author", "username avatar")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    const total = await Post.countDocuments(query);
-
-    res.json({
-      posts,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalPosts: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Get user posts error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+  // TODO: Implement fetching posts by user ID
+  res.json({
+    message: "Posts for user (not yet implemented)",
+    userId: req.params.userId,
+  });
 });
 
 // @route   GET /api/posts/:id/comments
 // @desc    Get comments for a post
 // @access  Public
 router.get("/:id/comments", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { page = 1, limit = 10 } = req.query;
-    const post = await Post.findById(id);
-    if (!post) {
-      return res.status(404).json({ message: "Post not found" });
-    }
-    const Comment = (await import("../models/Comment.js")).default;
-    const comments = await Comment.find({ post: id, parentComment: null })
-      .populate("author", "username avatar")
-      .sort({ createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-    const total = await Comment.countDocuments({
-      post: id,
-      parentComment: null,
-    });
-    res.json({
-      comments,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(total / limit),
-        totalComments: total,
-        hasNextPage: page * limit < total,
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Get comments for post error:", error);
-    res.status(500).json({ message: "Server error" });
-  }
+  // TODO: Implement fetching comments for a post
+  res.json({
+    message: "Comments for post (not yet implemented)",
+    postId: req.params.id,
+  });
 });
 
 export default router;

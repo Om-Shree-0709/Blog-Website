@@ -5,7 +5,7 @@ import app from "./app.js";
 dotenv.config();
 
 // Port from environment or default to 5000
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 7777;
 
 // Check MONGODB_URI
 if (!process.env.MONGODB_URI) {

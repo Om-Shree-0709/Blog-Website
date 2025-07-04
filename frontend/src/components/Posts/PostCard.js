@@ -25,7 +25,7 @@ const PostCard = ({ post, featured = false }) => {
     setIsLiked((prev) => !prev);
     setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
     try {
-      await api.post(`/posts/${post._id}/like`);
+      await api.post(`/api/posts/${post._id}/like`);
     } catch (err) {
       setIsLiked((prev) => !prev);
       setLikeCount((prev) => (isLiked ? prev + 1 : prev - 1));
@@ -41,7 +41,7 @@ const PostCard = ({ post, featured = false }) => {
     }
     setIsBookmarked((prev) => !prev);
     try {
-      await api.post(`/posts/${post._id}/bookmark`);
+      await api.post(`/api/posts/${post._id}/bookmark`);
     } catch (err) {
       setIsBookmarked((prev) => !prev);
       toast.error("Failed to update bookmark");
@@ -60,6 +60,7 @@ const PostCard = ({ post, featured = false }) => {
           <img
             src={post.featuredImage}
             alt={post.title}
+            loading="lazy"
             className="w-full h-full object-cover transition-transform hover:scale-105"
           />
         </div>
@@ -103,6 +104,7 @@ const PostCard = ({ post, featured = false }) => {
             <img
               src={post.author.avatar}
               alt={post.author.username}
+              loading="lazy"
               className="w-8 h-8 rounded-full mr-3"
             />
           ) : (

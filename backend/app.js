@@ -9,19 +9,34 @@ import hpp from "hpp";
 import dotenv from "dotenv";
 import path from "path";
 import mongoose from "mongoose";
+import cookieParser from "cookie-parser";
 
 import authRoutes from "./routes/auth.js";
 import userRoutes from "./routes/users.js";
 import postRoutes from "./routes/posts.js";
 import commentRoutes from "./routes/comments.js";
 import searchRoutes from "./routes/search.js";
+import adminRoutes from "./routes/admin.js";
 
 dotenv.config();
 
 const app = express();
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://inkwell-frontend-gzou.onrender.com",
+];
+
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN || "*",
+  origin: function (origin, callback) {
+    // allow requests with no origin (like mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS: " + origin), false);
+    }
+  },
   credentials: true,
 };
 
@@ -33,6 +48,7 @@ app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(hpp());
+app.use(cookieParser());
 
 // Body parser
 app.use(express.json({ limit: "10mb" }));
@@ -60,6 +76,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/search", searchRoutes);
+app.use("/api/admin", adminRoutes);
 
 // Health check route
 app.get("/api/health", async (req, res) => {
@@ -90,6 +107,10 @@ app.use((err, req, res, next) => {
     message: err.message || "Something went wrong!",
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
+});
+
+app.get("/cors-debug", (req, res) => {
+  res.json({ allowedOrigins, corsOptions: corsOptions.toString() });
 });
 
 export default app;

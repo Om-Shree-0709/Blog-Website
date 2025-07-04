@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       if (state.token) {
         try {
           dispatch({ type: "AUTH_START" });
-          const response = await api.get("/auth/profile");
+          const response = await api.get("/api/auth/profile");
           dispatch({
             type: "AUTH_SUCCESS",
             payload: {
@@ -95,7 +95,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       dispatch({ type: "AUTH_START" });
-      const response = await api.post("/auth/signup", userData);
+      const response = await api.post("/api/auth/signup", userData);
 
       const { token, user } = response.data;
       localStorage.setItem("token", token);
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (credentials) => {
     try {
       dispatch({ type: "AUTH_START" });
-      const response = await api.post("/auth/login", credentials);
+      const response = await api.post("/api/auth/login", credentials);
 
       const { token, user } = response.data;
       localStorage.setItem("token", token);
@@ -149,7 +149,7 @@ export const AuthProvider = ({ children }) => {
   // Update user profile
   const updateProfile = async (userData) => {
     try {
-      const response = await api.put(`/users/${state.user._id}`, userData);
+      const response = await api.put(`/api/users/${state.user._id}`, userData);
       dispatch({ type: "UPDATE_USER", payload: response.data.user });
       toast.success("Profile updated successfully!");
       return { success: true };
@@ -163,7 +163,7 @@ export const AuthProvider = ({ children }) => {
   // Change password
   const changePassword = async (passwordData) => {
     try {
-      await api.put("/auth/change-password", passwordData);
+      await api.put("/api/auth/change-password", passwordData);
       toast.success("Password changed successfully!");
       return { success: true };
     } catch (error) {

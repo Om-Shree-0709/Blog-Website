@@ -23,3 +23,22 @@ const ProtectedRoute = ({ children }) => {
 };
 
 export default ProtectedRoute;
+
+export const AdminProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== "admin") {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return children;
+};

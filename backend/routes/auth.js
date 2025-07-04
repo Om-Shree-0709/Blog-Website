@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { protect } from "../middleware/auth.js";
 import { validateSignup, validateLogin } from "../middleware/validation.js";
+import Post from "../models/Post.js";
 
 const router = express.Router();
 
@@ -123,5 +124,7 @@ router.post("/refresh", protect, async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Removed /user/published and /user/drafts routes from this file
 
 export default router;

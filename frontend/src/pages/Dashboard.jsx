@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { formatDistanceToNow } from "date-fns";
 import {
@@ -25,6 +25,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 const Dashboard = () => {
   const { user, updateProfile, changePassword } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(
     searchParams.get("tab") || "overview"
@@ -60,15 +61,17 @@ const Dashboard = () => {
       setLoading(true);
 
       // Fetch published posts
-      const publishedResponse = await api.get("/posts/user/published");
+      const publishedResponse = await api.get("/api/posts/user/published");
       setPosts(publishedResponse.data.posts);
 
       // Fetch draft posts
-      const draftsResponse = await api.get("/posts/user/drafts");
+      const draftsResponse = await api.get("/api/posts/user/drafts");
       setDrafts(draftsResponse.data.posts);
 
       // Fetch bookmarks
-      const bookmarksResponse = await api.get(`/users/${user._id}/bookmarks`);
+      const bookmarksResponse = await api.get(
+        `/api/users/${user._id}/bookmarks`
+      );
       setBookmarks(bookmarksResponse.data.bookmarks);
 
       // Calculate stats
@@ -123,7 +126,7 @@ const Dashboard = () => {
     }
 
     try {
-      await api.delete(`/posts/${postId}`);
+      await api.delete(`/api/posts/${postId}`);
       toast.success("Post deleted successfully");
       fetchDashboardData();
     } catch (error) {

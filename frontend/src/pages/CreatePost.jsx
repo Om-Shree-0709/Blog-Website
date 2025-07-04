@@ -81,7 +81,7 @@ const CreatePost = () => {
         isPublished: publish,
       };
 
-      const response = await api.post("/posts", postData);
+      const response = await api.post("/api/posts", postData);
 
       if (response.data && response.data.post) {
         toast.success(
@@ -165,6 +165,7 @@ const CreatePost = () => {
                 src={featuredImage}
                 alt="Featured"
                 className="w-full h-64 object-cover rounded-lg mb-6"
+                loading="lazy"
               />
             )}
             <div className="prose prose-lg max-w-none dark:prose-invert">
@@ -265,6 +266,7 @@ const CreatePost = () => {
                     src={featuredImage}
                     alt="Featured"
                     className="w-32 h-32 object-cover rounded-lg"
+                    loading="lazy"
                   />
                 </div>
               )}

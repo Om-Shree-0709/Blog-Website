@@ -16,7 +16,8 @@ router.get("/:username", async (req, res) => {
 
     const user = await User.findOne({ username })
       .populate("bookmarks", "title slug featuredImage excerpt")
-      .select("-password");
+      .select("-password")
+      .populate("postCount");
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
@@ -40,7 +41,13 @@ router.get("/:username", async (req, res) => {
     });
 
     res.json({
-      user: user.getPublicProfile(),
+      user: {
+        ...user.getPublicProfile(),
+        postCount: await Post.countDocuments({
+          author: user._id,
+          isPublished: true,
+        }),
+      },
       posts,
       pagination: {
         currentPage: page,
