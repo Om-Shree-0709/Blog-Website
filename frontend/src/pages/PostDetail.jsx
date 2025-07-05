@@ -102,7 +102,7 @@ const PostDetail = () => {
 
     setSubmittingComment(true);
     try {
-      await api.post("/comments", {
+      await api.post("/api/comments", {
         content: newComment,
         postId: post._id,
       });

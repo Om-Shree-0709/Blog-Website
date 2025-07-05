@@ -32,7 +32,7 @@ router.delete("/users/:id", async (req, res) => {
 // POSTS
 router.get("/posts", async (req, res) => {
   const posts = await Post.find()
-    .select("title slug author createdAt isPublished")
+    .select("title slug author createdAt isPublished likes")
     .populate("author", "username email")
     .lean();
   res.json({ posts });
@@ -103,7 +103,7 @@ router.delete("/users/:userId/bookmark/:postId", async (req, res) => {
 // COMMENTS
 router.get("/comments", async (req, res) => {
   const comments = await Comment.find()
-    .select("content author post createdAt")
+    .select("content author post createdAt likes")
     .populate("author", "username")
     .populate("post", "title")
     .lean();
