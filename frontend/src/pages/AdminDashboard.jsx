@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_API_URL || "http://localhost:7777"}/admin`;
+console.log("Admin API URL:", API);
 
 const TABS = [
   {
@@ -79,6 +80,7 @@ function AdminDashboard() {
           posts: `${API}/posts`,
           comments: `${API}/comments`,
         };
+        console.log("Fetching admin endpoints:", endpoints);
         const [usersRes, postsRes, commentsRes] = await Promise.all([
           fetch(endpoints.users, fetchOptions),
           fetch(endpoints.posts, fetchOptions),
