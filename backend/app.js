@@ -33,10 +33,13 @@ const corsOptions = {
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     } else {
+      console.log("CORS blocked origin:", origin);
       return callback(new Error("Not allowed by CORS: " + origin), false);
     }
   },
   credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
 };
 
 // Trust proxy (for Render)
@@ -69,6 +72,21 @@ if (process.env.NODE_ENV === "production") {
 // ✅ Now use CORS after it's declared
 app.use(cors(corsOptions));
 
+// Additional CORS headers for API routes
+app.use("/api", (req, res, next) => {
+  res.header(
+    "Access-Control-Allow-Origin",
+    "https://inkwell-monorepo.onrender.com"
+  );
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
+});
+
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
@@ -94,6 +112,16 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// Debug route for CORS testing
+app.get("/cors-debug", (req, res) => {
+  res.json({
+    allowedOrigins,
+    corsOptions: corsOptions.toString(),
+    currentOrigin: req.headers.origin,
+    userAgent: req.headers["user-agent"],
+  });
+});
+
 // Serve static files from React build
 if (process.env.NODE_ENV === "production") {
   // Serve static files from the React build directory (copied to backend)
@@ -117,10 +145,6 @@ app.use((err, req, res, next) => {
     message: err.message || "Something went wrong!",
     ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
-});
-
-app.get("/cors-debug", (req, res) => {
-  res.json({ allowedOrigins, corsOptions: corsOptions.toString() });
 });
 
 export default app;
