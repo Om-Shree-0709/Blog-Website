@@ -302,9 +302,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Your Name**
 
-- GitHub: [@yourusername](https://github.com/yourusername)
-- LinkedIn: [Your LinkedIn](https://linkedin.com/in/yourprofile)
-- Portfolio: [Your Portfolio](https://yourportfolio.com)
+- GitHub: [@Om-Shree-0709](https://github.com/Om-Shree-0709)
+- LinkedIn: [Om Shree](https://www.linkedin.com/in/om-shree-04372118a/)
+- Portfolio: [My Portfolio](https://omshree.netlify.app/)
 
 ## 🙏 Acknowledgments
 
