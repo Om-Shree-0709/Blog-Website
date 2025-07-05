@@ -72,21 +72,6 @@ if (process.env.NODE_ENV === "production") {
 // ✅ Now use CORS after it's declared
 app.use(cors(corsOptions));
 
-// Additional CORS headers for API routes
-app.use("/api", (req, res, next) => {
-  res.header(
-    "Access-Control-Allow-Origin",
-    "https://inkwell-monorepo.onrender.com"
-  );
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Content-Type, Authorization, X-Requested-With"
-  );
-  res.header("Access-Control-Allow-Credentials", "true");
-  next();
-});
-
 // API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
