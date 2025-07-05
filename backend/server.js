@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import app from "./app.js";
+import { createIndexes } from "./utils/createIndexes.js";
 
 dotenv.config();
 
@@ -24,19 +25,31 @@ if (!mongoUri.includes("/inkwell")) {
 }
 
 const mongoOptions = {
-  maxPoolSize: 10,
+  maxPoolSize: 50,
+  minPoolSize: 10,
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-  bufferCommands: false,
+  bufferCommands: true,
   retryWrites: true,
   w: "majority",
+  maxIdleTimeMS: 60000,
+  connectTimeoutMS: 15000,
+  heartbeatFrequencyMS: 10000,
+  // Performance optimizations
+  readPreference: "secondaryPreferred",
+  readConcern: { level: "local" },
+  writeConcern: { w: "majority", j: false },
 };
 
 // Connect to MongoDB and start server
 mongoose
   .connect(mongoUri, mongoOptions)
-  .then(() => {
+  .then(async () => {
     console.log("✅ Connected to MongoDB");
+
+    // Create indexes for optimal performance
+    await createIndexes();
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(

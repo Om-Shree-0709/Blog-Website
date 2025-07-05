@@ -5,6 +5,7 @@ import PostCard from "../components/Posts/PostCard";
 import CategoryCard from "../components/UI/CategoryCard";
 import { useAuth } from "../contexts/AuthContext";
 import api from "../utils/api";
+import { useRequestCancellation } from "../hooks/useRequestCancellation";
 import { BookOpen } from "lucide-react";
 import toast from "react-hot-toast";
 import HARDCODED_ARTICLES from "../utils/hardcodedArticles";
@@ -16,6 +17,7 @@ const Home = () => {
   const [categories, setCategories] = useState([]);
   // Set loading to false initially to show hardcoded articles
   const [loading, setLoading] = useState(false);
+  const [previewLoaded, setPreviewLoaded] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -24,6 +26,10 @@ const Home = () => {
   });
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  // Cancel requests when component unmounts
+  useRequestCancellation("/api/posts", false);
+  useRequestCancellation("/api/search", false);
 
   const fetchPosts = useCallback(async (page = 1) => {
     try {
@@ -39,6 +45,18 @@ const Home = () => {
 
       setPagination(response.data.pagination);
     } catch (error) {
+      // Don't show toast for aborted requests
+      if (
+        error?.aborted ||
+        error.code === "ECONNABORTED" ||
+        error.code === "ERR_CANCELED" ||
+        error.message === "canceled" ||
+        error.name === "AbortError"
+      ) {
+        console.log("🛑 fetchPosts request was aborted");
+        return;
+      }
+
       let message = "Failed to load posts. Please try again.";
       if (error.response?.data?.message) {
         message = error.response.data.message;
@@ -52,37 +70,129 @@ const Home = () => {
     }
   }, []);
 
-  // On mount, fetch real posts and replace hardcoded ones when loaded
+  // Progressive loading: Preview → Full data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDataProgressively = async () => {
       try {
-        // Fetch latest posts
-        const postsResponse = await api.get("/api/posts?limit=6");
-        if (
-          Array.isArray(postsResponse.data?.posts) &&
-          postsResponse.data.posts.length > 0
-        ) {
-          setPosts(postsResponse.data.posts);
+        // Phase 1: Fetch previews (ultra-fast)
+        const [previewLatest, previewFeatured, categoriesResponse] =
+          await Promise.all([
+            api.get("/api/posts/preview?limit=4&sort=latest"),
+            api.get("/api/posts/preview?limit=3&sort=popular"),
+            api.get("/api/search/categories"),
+          ]);
+
+        // Set preview data immediately
+        if (Array.isArray(previewLatest.data?.posts)) {
+          setPosts(previewLatest.data.posts);
+        }
+        if (Array.isArray(previewFeatured.data?.posts)) {
+          setFeaturedPosts(previewFeatured.data.posts);
+        }
+        if (Array.isArray(categoriesResponse.data?.categories)) {
+          setCategories(categoriesResponse.data.categories);
         }
 
-        // Fetch featured posts
-        const featuredResponse = await api.get(
-          "/api/posts?limit=3&sort=popular"
-        );
-        setFeaturedPosts(
-          Array.isArray(featuredResponse.data?.posts)
-            ? featuredResponse.data.posts
-            : []
-        );
+        setPreviewLoaded(true);
 
-        // Fetch categories
-        const categoriesResponse = await api.get("/api/search/categories");
-        setCategories(
-          Array.isArray(categoriesResponse.data?.categories)
-            ? categoriesResponse.data.categories
-            : []
-        );
+        // Phase 2: Fetch full data progressively (one by one)
+        const fetchFullData = async () => {
+          // Fetch full data for latest posts (4 posts)
+          const latestPromises = previewLatest.data.posts.map(
+            async (previewPost) => {
+              try {
+                const fullPost = await api.get(
+                  `/api/posts/${previewPost.slug}`
+                );
+                return fullPost.data.post;
+              } catch (error) {
+                // Don't log errors for aborted requests
+                if (
+                  error?.aborted ||
+                  error.code === "ECONNABORTED" ||
+                  error.code === "ERR_CANCELED" ||
+                  error.message === "canceled" ||
+                  error.name === "AbortError"
+                ) {
+                  console.log(`🛑 Request aborted for ${previewPost.slug}`);
+                  return null; // Return null to filter out aborted requests
+                }
+                console.error(
+                  `Error fetching full data for ${previewPost.slug}:`,
+                  error
+                );
+                return previewPost; // Fallback to preview data
+              }
+            }
+          );
+
+          // Fetch full data for featured posts (3 posts)
+          const featuredPromises = previewFeatured.data.posts.map(
+            async (previewPost) => {
+              try {
+                const fullPost = await api.get(
+                  `/api/posts/${previewPost.slug}`
+                );
+                return fullPost.data.post;
+              } catch (error) {
+                // Don't log errors for aborted requests
+                if (
+                  error?.aborted ||
+                  error.code === "ECONNABORTED" ||
+                  error.code === "ERR_CANCELED" ||
+                  error.message === "canceled" ||
+                  error.name === "AbortError"
+                ) {
+                  console.log(`🛑 Request aborted for ${previewPost.slug}`);
+                  return null; // Return null to filter out aborted requests
+                }
+                console.error(
+                  `Error fetching full data for ${previewPost.slug}:`,
+                  error
+                );
+                return previewPost; // Fallback to preview data
+              }
+            }
+          );
+
+          // Execute all promises in parallel but update state progressively
+          const [latestResults, featuredResults] = await Promise.all([
+            Promise.all(latestPromises),
+            Promise.all(featuredPromises),
+          ]);
+
+          // Filter out null results from aborted requests
+          const filteredLatest = latestResults.filter(
+            (result) => result !== null
+          );
+          const filteredFeatured = featuredResults.filter(
+            (result) => result !== null
+          );
+
+          // Update state with full data (only if we have results)
+          if (filteredLatest.length > 0) {
+            setPosts(filteredLatest);
+          }
+          if (filteredFeatured.length > 0) {
+            setFeaturedPosts(filteredFeatured);
+          }
+        };
+
+        // Start fetching full data
+        fetchFullData();
       } catch (err) {
+        // Don't show toast for aborted requests
+        if (
+          err?.aborted ||
+          err.code === "ECONNABORTED" ||
+          err.code === "ERR_CANCELED" ||
+          err.message === "canceled" ||
+          err.name === "AbortError"
+        ) {
+          console.log("🛑 Home component requests were aborted");
+          return;
+        }
+
         let message = "Failed to load posts";
         if (err.response?.data?.message) {
           message = err.response.data.message;
@@ -93,7 +203,8 @@ const Home = () => {
         console.error("Error fetching data:", err);
       }
     };
-    fetchData();
+
+    fetchDataProgressively();
   }, []);
 
   // Refresh posts when user returns to home page
@@ -103,7 +214,9 @@ const Home = () => {
     };
 
     window.addEventListener("focus", handleFocus);
-    return () => window.removeEventListener("focus", handleFocus);
+    return () => {
+      window.removeEventListener("focus", handleFocus);
+    };
   }, [fetchPosts]);
 
   const handleStartWriting = () => {

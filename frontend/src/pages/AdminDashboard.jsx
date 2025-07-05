@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 const API = `${
-  process.env.REACT_APP_API_URL || "http://localhost:7777"
+  process.env.REACT_APP_API_URL || "http://localhost:5000"
 }/api/admin`;
 
 const TABS = [
@@ -75,40 +75,38 @@ function AdminDashboard() {
           "Content-Type": "application/json",
         },
       };
-      if (["users", "posts", "comments"].includes(tab)) {
-        const endpoints = {
-          users: `${API}/users`,
-          posts: `${API}/posts`,
-          comments: `${API}/comments`,
-        };
-        const [usersRes, postsRes, commentsRes] = await Promise.all([
-          fetch(endpoints.users, fetchOptions),
-          fetch(endpoints.posts, fetchOptions),
-          fetch(endpoints.comments, fetchOptions),
-        ]);
+      if (tab === "users") {
+        const usersRes = await fetch(`${API}/users?limit=50`, fetchOptions);
         if (!usersRes.ok)
           throw new Error(
             `Failed to fetch users: ${usersRes.status} ${usersRes.statusText}`
           );
+        const usersData = await usersRes.json();
+        setUsers(usersData.users || []);
+      } else if (tab === "posts") {
+        const postsRes = await fetch(`${API}/posts?limit=50`, fetchOptions);
         if (!postsRes.ok)
           throw new Error(
             `Failed to fetch posts: ${postsRes.status} ${postsRes.statusText}`
           );
+        const postsData = await postsRes.json();
+        setPosts(postsData.posts || []);
+      } else if (tab === "comments") {
+        const commentsRes = await fetch(
+          `${API}/comments?limit=50`,
+          fetchOptions
+        );
         if (!commentsRes.ok)
           throw new Error(
             `Failed to fetch comments: ${commentsRes.status} ${commentsRes.statusText}`
           );
-        const usersData = await usersRes.json();
-        const postsData = await postsRes.json();
         const commentsData = await commentsRes.json();
-        setUsers(usersData.users || []);
-        setPosts(postsData.posts || []);
         setComments(commentsData.comments || []);
       } else if (tab === "likes") {
-        // Likes: fetch posts and comments in parallel
+        // Likes: fetch posts and comments in parallel with limits
         const [postRes, commentRes] = await Promise.all([
-          fetch(`${API}/posts`, fetchOptions),
-          fetch(`${API}/comments`, fetchOptions),
+          fetch(`${API}/posts?limit=100`, fetchOptions),
+          fetch(`${API}/comments?limit=100`, fetchOptions),
         ]);
         if (!postRes.ok)
           throw new Error(
@@ -122,28 +120,28 @@ function AdminDashboard() {
         const commentData = await commentRes.json();
         let allLikes = [];
         (postData.posts || []).forEach((p) => {
-          (p.likes || []).forEach((userId) => {
+          if (p.likeCount > 0) {
             allLikes.push({
-              _id: `${p._id}-${userId}`,
+              _id: `${p._id}-likes`,
               type: "post",
-              user: userId,
-              post: p,
+              count: p.likeCount,
+              post: { _id: p._id, title: p.title, slug: p.slug },
             });
-          });
+          }
         });
         (commentData.comments || []).forEach((c) => {
-          (c.likes || []).forEach((userId) => {
+          if (c.likeCount > 0) {
             allLikes.push({
-              _id: `${c._id}-${userId}`,
+              _id: `${c._id}-likes`,
               type: "comment",
-              user: userId,
-              comment: c,
+              count: c.likeCount,
+              comment: { _id: c._id, content: c.content.substring(0, 100) },
             });
-          });
+          }
         });
         setLikes(allLikes);
       } else if (tab === "bookmarks") {
-        const userRes = await fetch(`${API}/users`, fetchOptions);
+        const userRes = await fetch(`${API}/users?limit=50`, fetchOptions);
         if (!userRes.ok)
           throw new Error(
             `Failed to fetch users for bookmarks: ${userRes.status} ${userRes.statusText}`
@@ -151,9 +149,14 @@ function AdminDashboard() {
         const userData = await userRes.json();
         let allBookmarks = [];
         (userData.users || []).forEach((u) => {
-          (u.bookmarks || []).forEach((postId) => {
-            allBookmarks.push({ _id: `${u._id}-${postId}`, user: u, postId });
-          });
+          if (u.bookmarks && u.bookmarks.length > 0) {
+            allBookmarks.push({
+              _id: `${u._id}-bookmarks`,
+              user: { _id: u._id, username: u.username, email: u.email },
+              bookmarkCount: u.bookmarks.length,
+              bookmarks: u.bookmarks.slice(0, 5), // Show first 5 bookmarks
+            });
+          }
         });
         setBookmarks(allBookmarks);
       }

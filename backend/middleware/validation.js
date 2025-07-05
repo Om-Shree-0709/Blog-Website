@@ -93,11 +93,105 @@ const validateProfileUpdate = [
     .withMessage(
       "Username can only contain letters, numbers, underscores, and hyphens"
     ),
+  body("displayName")
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage("Display name cannot exceed 50 characters"),
   body("bio")
     .optional()
     .trim()
     .isLength({ max: 500 })
     .withMessage("Bio cannot exceed 500 characters"),
+  body("location")
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage("Location cannot exceed 100 characters"),
+  body("interests")
+    .optional()
+    .isArray({ max: 10 })
+    .withMessage("You can have up to 10 interests"),
+  body("interests.*")
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 30 })
+    .withMessage("Each interest must be between 1 and 30 characters"),
+  body("profileTheme")
+    .optional()
+    .isIn(["default", "minimal", "creative", "professional"])
+    .withMessage("Invalid profile theme"),
+  body("accentColor")
+    .optional()
+    .isLength({ max: 7 })
+    .withMessage("Color must be a valid hex color"),
+  body("privacySettings.profileVisibility")
+    .optional()
+    .isIn(["public", "followers", "private"])
+    .withMessage("Invalid profile visibility setting"),
+  body("privacySettings.showEmail")
+    .optional()
+    .isBoolean()
+    .withMessage("showEmail must be a boolean"),
+  body("privacySettings.showLocation")
+    .optional()
+    .isBoolean()
+    .withMessage("showLocation must be a boolean"),
+  body("privacySettings.showInterests")
+    .optional()
+    .isBoolean()
+    .withMessage("showInterests must be a boolean"),
+  body("privacySettings.showSocialLinks")
+    .optional()
+    .isBoolean()
+    .withMessage("showSocialLinks must be a boolean"),
+  body("notificationPreferences.emailNotifications")
+    .optional()
+    .isBoolean()
+    .withMessage("emailNotifications must be a boolean"),
+  body("notificationPreferences.commentNotifications")
+    .optional()
+    .isBoolean()
+    .withMessage("commentNotifications must be a boolean"),
+  body("notificationPreferences.likeNotifications")
+    .optional()
+    .isBoolean()
+    .withMessage("likeNotifications must be a boolean"),
+  body("notificationPreferences.followNotifications")
+    .optional()
+    .isBoolean()
+    .withMessage("followNotifications must be a boolean"),
+  body("notificationPreferences.newsletter")
+    .optional()
+    .isBoolean()
+    .withMessage("newsletter must be a boolean"),
+  body("socialLinks.website")
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage("Website URL cannot exceed 200 characters"),
+  body("socialLinks.twitter")
+    .optional()
+    .trim()
+    .isLength({ max: 15 })
+    .withMessage("Twitter username cannot exceed 15 characters"),
+  body("socialLinks.github")
+    .optional()
+    .trim()
+    .isLength({ max: 39 })
+    .withMessage("GitHub username cannot exceed 39 characters"),
+  body("socialLinks.linkedin")
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage("LinkedIn URL cannot exceed 200 characters"),
+  body("socialLinks.instagram")
+    .optional()
+    .trim()
+    .isLength({ max: 30 })
+    .withMessage("Instagram username cannot exceed 30 characters"),
+  body("socialLinks.youtube")
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage("YouTube URL cannot exceed 200 characters"),
   handleValidationErrors,
 ];
 

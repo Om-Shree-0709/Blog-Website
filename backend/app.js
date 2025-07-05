@@ -23,8 +23,11 @@ const app = express();
 
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? ["https://inkwell-monorepo.onrender.com"]
-    : ["http://localhost:3000", "https://inkwell-monorepo.onrender.com"];
+    ? [process.env.CORS_ORIGIN || "https://inkwell-monorepo.onrender.com"]
+    : [
+        "http://localhost:3000",
+        process.env.CORS_ORIGIN || "https://inkwell-monorepo.onrender.com",
+      ];
 
 const corsOptions = {
   origin: function (origin, callback) {

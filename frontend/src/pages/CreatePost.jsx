@@ -105,8 +105,15 @@ const CreatePost = () => {
         } else {
           message = error.response.data.message;
         }
-      } else if (error.code === "ECONNABORTED") {
-        message = "Request timed out. Please try again.";
+      } else if (
+        error?.aborted ||
+        error.code === "ECONNABORTED" ||
+        error.code === "ERR_CANCELED" ||
+        error.message === "canceled" ||
+        error.name === "AbortError"
+      ) {
+        console.log("🛑 Post creation request was aborted");
+        return; // Don't show toast for aborted requests
       } else if (error.message) {
         message = error.message;
       }

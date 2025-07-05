@@ -75,6 +75,17 @@ const EditPost = () => {
           category: post.category,
         });
       } catch (error) {
+        // Don't show error for aborted requests
+        if (
+          error?.aborted ||
+          error.code === "ECONNABORTED" ||
+          error.code === "ERR_CANCELED" ||
+          error.message === "canceled" ||
+          error.name === "AbortError"
+        ) {
+          console.log("🛑 Post fetch request was aborted");
+          return;
+        }
         console.error("Error fetching post:", error);
         toast.error("Failed to load post");
         navigate("/");
@@ -148,6 +159,17 @@ const EditPost = () => {
         throw new Error("Invalid response from server");
       }
     } catch (error) {
+      // Don't show error for aborted requests
+      if (
+        error?.aborted ||
+        error.code === "ECONNABORTED" ||
+        error.code === "ERR_CANCELED" ||
+        error.message === "canceled" ||
+        error.name === "AbortError"
+      ) {
+        console.log("🛑 Post update request was aborted");
+        return;
+      }
       const message = error.response?.data?.message || "Failed to update post";
       toast.error(message);
       console.error("Post update error:", error);
@@ -171,6 +193,17 @@ const EditPost = () => {
       toast.success("Post deleted successfully!");
       navigate("/dashboard");
     } catch (error) {
+      // Don't show error for aborted requests
+      if (
+        error?.aborted ||
+        error.code === "ECONNABORTED" ||
+        error.code === "ERR_CANCELED" ||
+        error.message === "canceled" ||
+        error.name === "AbortError"
+      ) {
+        console.log("🛑 Post delete request was aborted");
+        return;
+      }
       const message = error.response?.data?.message || "Failed to delete post";
       toast.error(message);
     } finally {

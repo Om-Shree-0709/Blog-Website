@@ -31,6 +31,12 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters long"],
     },
+    // Enhanced profile fields
+    displayName: {
+      type: String,
+      maxlength: [50, "Display name cannot exceed 50 characters"],
+      default: "",
+    },
     bio: {
       type: String,
       maxlength: [500, "Bio cannot exceed 500 characters"],
@@ -39,6 +45,74 @@ const userSchema = new mongoose.Schema(
     avatar: {
       type: String,
       default: "",
+    },
+    location: {
+      type: String,
+      maxlength: [100, "Location cannot exceed 100 characters"],
+      default: "",
+    },
+    interests: [
+      {
+        type: String,
+        maxlength: [30, "Interest cannot exceed 30 characters"],
+      },
+    ],
+    // Profile customization
+    profileTheme: {
+      type: String,
+      enum: ["default", "minimal", "creative", "professional"],
+      default: "default",
+    },
+    accentColor: {
+      type: String,
+      default: "#3B82F6", // Default blue
+    },
+    // Privacy settings
+    privacySettings: {
+      profileVisibility: {
+        type: String,
+        enum: ["public", "followers", "private"],
+        default: "public",
+      },
+      showEmail: {
+        type: Boolean,
+        default: false,
+      },
+      showLocation: {
+        type: Boolean,
+        default: true,
+      },
+      showInterests: {
+        type: Boolean,
+        default: true,
+      },
+      showSocialLinks: {
+        type: Boolean,
+        default: true,
+      },
+    },
+    // Notification preferences
+    notificationPreferences: {
+      emailNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      commentNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      likeNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      followNotifications: {
+        type: Boolean,
+        default: true,
+      },
+      newsletter: {
+        type: Boolean,
+        default: false,
+      },
     },
     role: {
       type: String,
@@ -56,6 +130,8 @@ const userSchema = new mongoose.Schema(
       twitter: String,
       github: String,
       linkedin: String,
+      instagram: String,
+      youtube: String,
     },
     isVerified: {
       type: Boolean,
@@ -97,14 +173,83 @@ userSchema.virtual("followingCount", {
   count: true,
 });
 
+// Virtual for profile completion percentage
+userSchema.virtual("profileCompletion", {
+  get: function () {
+    const fields = [
+      this.displayName,
+      this.bio,
+      this.avatar,
+      this.location,
+      this.interests?.length > 0,
+      this.socialLinks?.website,
+      this.socialLinks?.twitter,
+      this.socialLinks?.github,
+      this.socialLinks?.linkedin,
+    ];
+
+    const completedFields = fields.filter(Boolean).length;
+    return Math.round((completedFields / fields.length) * 100);
+  },
+});
+
+// Virtual for default avatar
+userSchema.virtual("defaultAvatar", {
+  get: function () {
+    if (this.avatar) return this.avatar;
+
+    // Generate a colorful default avatar based on username
+    const colors = [
+      "#FF6B6B",
+      "#4ECDC4",
+      "#45B7D1",
+      "#96CEB4",
+      "#FFEAA7",
+      "#DDA0DD",
+      "#98D8C8",
+      "#F7DC6F",
+      "#BB8FCE",
+      "#85C1E9",
+      "#F8C471",
+      "#82E0AA",
+    ];
+
+    const colorIndex = this.username.charCodeAt(0) % colors.length;
+    const backgroundColor = colors[colorIndex];
+    const initials = this.displayName
+      ? this.displayName
+          .split(" ")
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase()
+      : this.username.substring(0, 2).toUpperCase();
+
+    return `data:image/svg+xml;base64,${btoa(`
+      <svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100" height="100" fill="${backgroundColor}"/>
+        <text x="50" y="50" font-family="Arial, sans-serif" font-size="40" 
+              font-weight="bold" fill="white" text-anchor="middle" dy=".3em">
+          ${initials}
+        </text>
+      </svg>
+    `)}`;
+  },
+});
+
 // Add indexes for better performance
 userSchema.index({ role: 1 });
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ createdAt: -1 });
 userSchema.index({ isVerified: 1 });
+userSchema.index({ "privacySettings.profileVisibility": 1 });
 
 // Text search index
-userSchema.index({ username: "text", bio: "text" });
+userSchema.index({
+  username: "text",
+  displayName: "text",
+  bio: "text",
+  location: "text",
+});
 
 // Pre-save middleware to hash password
 userSchema.pre("save", async function (next) {
@@ -129,6 +274,21 @@ userSchema.methods.getPublicProfile = function () {
   const userObject = this.toObject();
   delete userObject.password;
   delete userObject.email;
+
+  // Apply privacy settings
+  if (!this.privacySettings?.showEmail) {
+    delete userObject.email;
+  }
+  if (!this.privacySettings?.showLocation) {
+    delete userObject.location;
+  }
+  if (!this.privacySettings?.showInterests) {
+    delete userObject.interests;
+  }
+  if (!this.privacySettings?.showSocialLinks) {
+    delete userObject.socialLinks;
+  }
+
   return userObject;
 };
 

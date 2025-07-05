@@ -3,6 +3,7 @@ import User from "../models/User.js";
 import Post from "../models/Post.js";
 import Comment from "../models/Comment.js";
 import { admin, protect } from "../middleware/auth.js";
+import { cacheMiddleware } from "../middleware/cache.js";
 
 const router = express.Router();
 
@@ -10,9 +11,29 @@ const router = express.Router();
 router.use(protect, admin);
 
 // USERS
-router.get("/users", async (req, res) => {
-  const users = await User.find().select("-password -__v").lean();
-  res.json({ users });
+router.get("/users", cacheMiddleware(60), async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (page - 1) * limit;
+
+  const users = await User.find()
+    .select("username email role createdAt avatar bio")
+    .sort({ createdAt: -1 })
+    .limit(Number(limit))
+    .skip(skip)
+    .lean();
+
+  const total = await User.countDocuments();
+
+  res.json({
+    users,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      totalUsers: total,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+  });
 });
 
 router.put("/users/:id", async (req, res) => {
@@ -30,12 +51,32 @@ router.delete("/users/:id", async (req, res) => {
 });
 
 // POSTS
-router.get("/posts", async (req, res) => {
+router.get("/posts", cacheMiddleware(60), async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (page - 1) * limit;
+
   const posts = await Post.find()
-    .select("title slug author createdAt isPublished likes")
+    .select(
+      "title slug excerpt author createdAt isPublished viewCount likeCount commentCount"
+    )
     .populate("author", "username email")
+    .sort({ createdAt: -1 })
+    .limit(Number(limit))
+    .skip(skip)
     .lean();
-  res.json({ posts });
+
+  const total = await Post.countDocuments();
+
+  res.json({
+    posts,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      totalPosts: total,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+  });
 });
 
 router.put("/posts/:id", async (req, res) => {
@@ -101,13 +142,31 @@ router.delete("/users/:userId/bookmark/:postId", async (req, res) => {
 });
 
 // COMMENTS
-router.get("/comments", async (req, res) => {
+router.get("/comments", cacheMiddleware(60), async (req, res) => {
+  const { page = 1, limit = 50 } = req.query;
+  const skip = (page - 1) * limit;
+
   const comments = await Comment.find()
-    .select("content author post createdAt likes")
+    .select("content author post createdAt likeCount")
     .populate("author", "username")
-    .populate("post", "title")
+    .populate("post", "title slug")
+    .sort({ createdAt: -1 })
+    .limit(Number(limit))
+    .skip(skip)
     .lean();
-  res.json({ comments });
+
+  const total = await Comment.countDocuments();
+
+  res.json({
+    comments,
+    pagination: {
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(total / limit),
+      totalComments: total,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+    },
+  });
 });
 
 router.put("/comments/:id", async (req, res) => {

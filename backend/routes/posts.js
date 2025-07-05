@@ -12,13 +12,49 @@ import {
   validateId,
   validateSearch,
 } from "../middleware/validation.js";
+import { cacheMiddleware } from "../middleware/cache.js";
 
 const router = express.Router();
+
+// @route   GET /api/posts/preview
+// @desc    Get post previews (minimal data for fast loading)
+// @access  Public
+router.get("/preview", cacheMiddleware(180), async (req, res) => {
+  try {
+    const { limit = 10, sort = "latest" } = req.query;
+
+    // Build sort options
+    let sortOptions = {};
+    switch (sort) {
+      case "popular":
+        sortOptions = { viewCount: -1, createdAt: -1 };
+        break;
+      case "latest":
+      default:
+        sortOptions = { createdAt: -1 };
+        break;
+    }
+
+    // Ultra-minimal data for preview
+    const posts = await Post.find({ isPublished: true })
+      .select("title author createdAt slug")
+      .populate("author", "username")
+      .sort(sortOptions)
+      .limit(Number(limit))
+      .lean()
+      .exec();
+
+    res.json({ posts });
+  } catch (error) {
+    console.error("Get post previews error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 // @route   GET /api/posts
 // @desc    Get all published posts with pagination
 // @access  Public
-router.get("/", async (req, res) => {
+router.get("/", cacheMiddleware(180), async (req, res) => {
   try {
     const {
       page = 1,
@@ -64,10 +100,16 @@ router.get("/", async (req, res) => {
       .sort(sortOptions)
       .limit(Number(limit))
       .skip((page - 1) * limit)
-      .lean();
+      .lean()
+      .exec();
 
-    // Get total count efficiently
-    const total = await Post.countDocuments(query);
+    // Get total count efficiently (only for first page or when needed)
+    let total;
+    if (page === 1 || req.query.includeTotal === "true") {
+      total = await Post.countDocuments(query).exec();
+    } else {
+      total = 0; // Don't count for pagination beyond first page
+    }
 
     const response = {
       posts,
