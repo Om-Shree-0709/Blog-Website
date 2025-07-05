@@ -23,8 +23,7 @@ const app = express();
 
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://inkwell-frontend-gzou.onrender.com",
-  "https://inkwell-backend-y8gj.onrender.com",
+  "https://inkwell-monorepo.onrender.com",
 ];
 
 const corsOptions = {
