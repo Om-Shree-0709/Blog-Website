@@ -64,18 +64,18 @@ Set these in your Render service environment:
 ```
 NODE_ENV=production
 PORT=10000
-MONGODB_URI=mongodb+srv://omkumaramritsar:VjvBzPmlKozU1I9s@cluster1.bzwcsmp.mongodb.net/inkwell
-JWT_SECRET=abcd@1234
+MONGODB_URI=xxxxx
+JWT_SECRET=xxxxx
 JWT_EXPIRE=7d
 COOKIE_EXPIRE=7
-CLOUDINARY_API_KEY=831414735727613
-CLOUDINARY_API_SECRET=NZBJmK1yAP6SDXtEd2ZBpz9nbEA
+CLOUDINARY_API_KEY=xxxxx
+CLOUDINARY_API_SECRET=xxxx
 ```
 
 **Frontend Variables:**
 
 ```
-REACT_APP_API_URL=https://inkwell-backend-y8gj.onrender.com/api
+REACT_APP_API_URL=xxxx
 GENERATE_SOURCEMAP=false
 ```
 
