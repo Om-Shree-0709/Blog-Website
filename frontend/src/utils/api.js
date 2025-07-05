@@ -1,9 +1,13 @@
 import axios from "axios";
 import toast from "react-hot-toast";
 
-// ✅ Use .env value
+// ✅ Use .env value with fallback for production
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "/api",
+  baseURL:
+    process.env.REACT_APP_API_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "/api"
+      : "http://localhost:7777/api"),
   timeout: 60000,
   withCredentials: false,
 });

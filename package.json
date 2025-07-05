@@ -1,8 +1,33 @@
 {
-  "dependencies": {
-    "ioredis": "^5.6.1"
+  "name": "inkwell-monorepo",
+  "version": "1.0.0",
+  "description": "InkWell Blog Website - Full Stack Monorepo",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm install",
+    "start": "cd backend && npm start",
+    "dev": "concurrently \"cd backend && npm run dev\" \"cd frontend && npm start\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm start"
   },
+  "keywords": [
+    "blog",
+    "fullstack",
+    "react",
+    "express",
+    "mongodb",
+    "inkwell"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "devDependencies": {
-    "source-map-explorer": "^2.5.3"
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
   }
 }

@@ -1,330 +1,208 @@
-# InkWell - Modern Blogging Platform
+# InkWell Blog Website - Full Stack Monorepo
 
-A modern, production-ready blogging platform built with the MERN stack (MongoDB, Express.js, React, Node.js). InkWell provides a beautiful, responsive interface for writers to share their stories and readers to discover amazing content.
-
-## ✨ Features
-
-### For Writers
-
-- **Rich Text Editor**: Create beautiful posts with React Quill editor
-- **Draft System**: Save and edit drafts before publishing
-- **Image Upload**: Support for featured images and inline images
-- **Categories & Tags**: Organize content with categories and tags
-- **SEO Optimization**: Built-in SEO fields for better search visibility
-- **Analytics Dashboard**: Track views, likes, and engagement
-
-### For Readers
-
-- **Beautiful UI**: Modern, responsive design with dark mode support
-- **Search & Filter**: Advanced search with category and tag filtering
-- **Bookmarks**: Save favorite posts for later reading
-- **Comments**: Engage with authors and other readers
-- **User Profiles**: Discover more content from favorite authors
-
-### Technical Features
-
-- **Authentication**: JWT-based authentication with role-based access
-- **Real-time Updates**: Live comment updates and notifications
-- **Performance**: Optimized with compression and caching
-- **Security**: Helmet.js, rate limiting, and input validation
-- **Mobile Responsive**: Works perfectly on all devices
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- MongoDB (local or Atlas)
-
-### Installation
-
-1. **Clone the repository**
-
-   ```bash
-   git clone <repository-url>
-   cd inkwell-blog-website
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm run install-all
-   ```
-
-3. **Environment Setup**
-
-   ```bash
-   cd backend
-   cp env.example .env
-   # Edit .env with your configuration
-   ```
-
-4. **Start Development Server**
-   ```bash
-   npm run dev
-   ```
-
-The application will be available at:
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+A modern blog website built with React frontend and Express.js backend, deployed as a monorepo on Render.
 
 ## 🏗️ Project Structure
 
 ```
-inkwell-blog-website/
-├── backend/                 # Express.js API server
-│   ├── models/             # MongoDB schemas
-│   ├── routes/             # API routes
-│   ├── middleware/         # Custom middleware
-│   ├── app.js             # Express app configuration
-│   └── server.js          # Server entry point
-├── frontend/               # React.js client
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/         # Page components
-│   │   ├── contexts/      # React contexts
-│   │   └── App.js         # Main app component
-│   └── public/            # Static assets
-└── README.md
+inkwell-monorepo/
+├── frontend/          # React frontend application
+├── backend/           # Express.js backend API
+├── package.json       # Root monorepo configuration
+├── render-build.sh    # Render deployment script
+└── README.md         # This file
 ```
 
-## 🔧 Configuration
+## 🚀 Quick Start
+
+### Local Development
+
+1. **Clone the repository**
+
+   ```bash
+   git clone <your-repo-url>
+   cd inkwell-monorepo
+   ```
+
+2. **Install all dependencies**
+
+   ```bash
+   npm run install:all
+   ```
+
+3. **Start development servers**
+
+   ```bash
+   # Start both frontend and backend
+   npm run dev
+
+   # Or start them separately
+   npm run dev:backend  # Backend on port 7777
+   npm run dev:frontend # Frontend on port 3000
+   ```
+
+### Production Build
+
+```bash
+npm run build
+```
+
+## 🌐 Deployment on Render
+
+### Prerequisites
+
+1. Create a Render account
+2. Connect your GitHub repository
+3. Set up environment variables in Render dashboard
 
 ### Environment Variables
 
-Create a `.env` file in the backend directory:
+Set these in your Render service environment:
 
-```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/inkwell-blog
+**Backend Variables:**
 
-# JWT
-JWT_SECRET=your-super-secret-jwt-key
+```
+NODE_ENV=production
+PORT=10000
+MONGODB_URI=mongodb+srv://omkumaramritsar:VjvBzPmlKozU1I9s@cluster1.bzwcsmp.mongodb.net/inkwell
+JWT_SECRET=abcd@1234
 JWT_EXPIRE=7d
-
-# Server
-PORT=5000
-NODE_ENV=development
-
-# CORS
-CORS_ORIGIN=http://localhost:3000
-
-# Rate Limiting
-RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=100
-
-# File Upload (Optional)
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
+COOKIE_EXPIRE=7
+CLOUDINARY_API_KEY=831414735727613
+CLOUDINARY_API_SECRET=NZBJmK1yAP6SDXtEd2ZBpz9nbEA
 ```
 
-## 🚀 Production Deployment
+**Frontend Variables:**
 
-### Option 1: Heroku Deployment
+```
+REACT_APP_API_URL=https://inkwell-backend-y8gj.onrender.com/api
+GENERATE_SOURCEMAP=false
+```
 
-1. **Create Heroku App**
+### Render Configuration
 
-   ```bash
-   heroku create your-inkwell-app
-   ```
+1. **Service Type:** Web Service
+2. **Build Command:** `chmod +x render-build.sh && ./render-build.sh`
+3. **Start Command:** `cd backend && npm start`
+4. **Root Directory:** Leave empty (root of monorepo)
 
-2. **Set Environment Variables**
+### Build Process
 
-   ```bash
-   heroku config:set NODE_ENV=production
-   heroku config:set MONGODB_URI=your-mongodb-atlas-uri
-   heroku config:set JWT_SECRET=your-production-jwt-secret
-   heroku config:set CORS_ORIGIN=https://your-app.herokuapp.com
-   ```
+The build script (`render-build.sh`) will:
 
-3. **Deploy**
-   ```bash
-   git push heroku main
-   ```
+1. Install root dependencies
+2. Build the frontend React app
+3. Install backend dependencies
+4. The backend will serve the frontend build files
 
-### Option 2: Vercel + Railway
+## 📁 File Structure Details
 
-1. **Deploy Backend to Railway**
+### Frontend (`/frontend`)
 
-   - Connect your GitHub repository to Railway
-   - Set environment variables
-   - Deploy the backend
+- React 18 with modern hooks
+- Tailwind CSS for styling
+- React Router for navigation
+- Axios for API calls
+- React Hook Form for forms
+- React Quill for rich text editing
 
-2. **Deploy Frontend to Vercel**
+### Backend (`/backend`)
 
-   ```bash
-   cd frontend
-   vercel --prod
-   ```
+- Express.js server
+- MongoDB with Mongoose
+- JWT authentication
+- File upload with Multer
+- Security middleware (Helmet, CORS, etc.)
+- Rate limiting
+- API routes for posts, users, comments, etc.
 
-3. **Update Frontend API URL**
-   - Update the proxy in `frontend/package.json`
-   - Or use environment variables for API URL
+## 🔧 Available Scripts
 
-### Option 3: DigitalOcean App Platform
+### Root Level
 
-1. **Connect Repository**
+- `npm run install:all` - Install dependencies for all packages
+- `npm run build` - Build both frontend and backend
+- `npm run dev` - Start both development servers
+- `npm start` - Start production server
 
-   - Connect your GitHub repository
-   - Select the main branch
+### Frontend
 
-2. **Configure Build Settings**
+- `npm start` - Start development server
+- `npm run build` - Build for production
+- `npm test` - Run tests
 
-   - Build Command: `npm run heroku-postbuild`
-   - Run Command: `npm start`
-   - Output Directory: `backend`
+### Backend
 
-3. **Set Environment Variables**
-   - Add all required environment variables
+- `npm start` - Start production server
+- `npm run dev` - Start development server with nodemon
 
-### Option 4: AWS EC2
+## 🌍 API Endpoints
 
-1. **Launch EC2 Instance**
+The backend provides the following API endpoints:
 
-   ```bash
-   # Connect to your EC2 instance
-   ssh -i your-key.pem ubuntu@your-ec2-ip
-   ```
-
-2. **Install Dependencies**
-
-   ```bash
-   sudo apt update
-   sudo apt install nodejs npm nginx
-   ```
-
-3. **Deploy Application**
-
-   ```bash
-   git clone <your-repo>
-   cd inkwell-blog-website
-   npm run install-all
-   npm run build
-   ```
-
-4. **Configure PM2**
-
-   ```bash
-   npm install -g pm2
-   pm2 start backend/server.js --name "inkwell-backend"
-   pm2 startup
-   pm2 save
-   ```
-
-5. **Configure Nginx**
-
-   ```bash
-   sudo nano /etc/nginx/sites-available/inkwell
-   ```
-
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-
-       location / {
-           proxy_pass http://localhost:5000;
-           proxy_http_version 1.1;
-           proxy_set_header Upgrade $http_upgrade;
-           proxy_set_header Connection 'upgrade';
-           proxy_set_header Host $host;
-           proxy_cache_bypass $http_upgrade;
-       }
-   }
-   ```
-
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/inkwell /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl restart nginx
-   ```
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/login` - User login
+- `GET /api/posts` - Get all posts
+- `POST /api/posts` - Create new post
+- `GET /api/posts/:id` - Get specific post
+- `PUT /api/posts/:id` - Update post
+- `DELETE /api/posts/:id` - Delete post
+- `POST /api/comments` - Add comment
+- `GET /api/search` - Search posts
+- `GET /api/health` - Health check
 
 ## 🔒 Security Features
 
-- **JWT Authentication**: Secure token-based authentication
-- **Password Hashing**: bcrypt.js for password security
-- **Input Validation**: Express-validator for data validation
-- **Rate Limiting**: Prevent abuse with express-rate-limit
-- **Helmet.js**: Security headers and protection
-- **CORS**: Configured for production domains
-- **SQL Injection Protection**: MongoDB with proper queries
+- JWT authentication
+- Password hashing with bcrypt
+- CORS protection
+- Rate limiting
+- XSS protection
+- MongoDB injection protection
+- Helmet security headers
 
-## 📊 Performance Optimization
+## 📝 Environment Configuration
 
-- **Compression**: gzip compression for faster loading
-- **Image Optimization**: Responsive images and lazy loading
-- **Code Splitting**: React lazy loading for better performance
-- **Caching**: Browser caching and API response caching
-- **CDN Ready**: Static assets optimized for CDN delivery
+### Development
 
-## 🧪 Testing
+Frontend will use `http://localhost:7777/api` for API calls.
 
-```bash
-# Run frontend tests
-cd frontend
-npm test
+### Production
 
-# Run backend tests (when implemented)
-cd backend
-npm test
-```
+Frontend will use the Render backend URL for API calls.
 
-## 📝 API Documentation
+## 🐛 Troubleshooting
 
-### Authentication Endpoints
+### Common Issues
 
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/login` - User login
-- `GET /api/auth/profile` - Get user profile
-- `PUT /api/auth/change-password` - Change password
+1. **Build fails on Render**
 
-### Posts Endpoints
+   - Check if all environment variables are set
+   - Ensure MongoDB connection string is correct
+   - Verify Node.js version compatibility
 
-- `GET /api/posts` - Get all published posts
-- `POST /api/posts` - Create new post
-- `GET /api/posts/:slug` - Get single post
-- `PUT /api/posts/:id` - Update post
-- `DELETE /api/posts/:id` - Delete post
+2. **Frontend can't connect to backend**
 
-### Search Endpoints
+   - Check CORS configuration
+   - Verify API URL in environment variables
+   - Ensure backend is running
 
-- `GET /api/search/posts` - Search posts
-- `GET /api/search/users` - Search users
-- `GET /api/search/tags` - Get popular tags
-- `GET /api/search/categories` - Get category stats
+3. **Static files not serving**
+   - Check if frontend build exists in `frontend/build/`
+   - Verify the path in `backend/app.js`
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-If you encounter any issues or have questions:
-
-1. Check the [Issues](https://github.com/your-username/inkwell-blog-website/issues) page
-2. Create a new issue with detailed information
-3. Contact the maintainers
-
-## 🙏 Acknowledgments
-
-- [React](https://reactjs.org/) - Frontend framework
-- [Express.js](https://expressjs.com/) - Backend framework
-- [MongoDB](https://www.mongodb.com/) - Database
-- [Tailwind CSS](https://tailwindcss.com/) - Styling
-- [React Quill](https://quilljs.com/) - Rich text editor
-- [Lucide React](https://lucide.dev/) - Icons
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ---
 
-**InkWell** - Where stories come to life ✨
+**Note:** This is a monorepo setup where the backend serves the frontend build files in production. The frontend build will be placed inside the backend folder during deployment.

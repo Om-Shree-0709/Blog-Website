@@ -24,6 +24,7 @@ const app = express();
 const allowedOrigins = [
   "http://localhost:3000",
   "https://inkwell-frontend-gzou.onrender.com",
+  "https://inkwell-backend-y8gj.onrender.com",
 ];
 
 const corsOptions = {
@@ -94,10 +95,21 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// Root route
-app.get("/", (req, res) => {
-  res.send("✅ Your Backend is working perfectly!");
-});
+// Serve static files from React build
+if (process.env.NODE_ENV === "production") {
+  // Serve static files from the React build directory (copied to backend)
+  app.use(express.static(path.join(process.cwd(), "build")));
+
+  // Handle React routing, return all requests to React app
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "build", "index.html"));
+  });
+} else {
+  // Root route for development
+  app.get("/", (req, res) => {
+    res.send("✅ Your Backend is working perfectly!");
+  });
+}
 
 // Global error handler
 app.use((err, req, res, next) => {
