@@ -15,7 +15,7 @@ import {
   Settings,
 } from "lucide-react";
 
-const API = "http://localhost:7777/api/admin";
+const API = `${process.env.REACT_APP_API_URL || "http://localhost:7777"}/admin`;
 
 const TABS = [
   {
