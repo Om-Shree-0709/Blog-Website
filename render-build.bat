@@ -15,6 +15,7 @@ cd ..
 
 REM Copy frontend build to backend
 echo 📁 Copying frontend build to backend...
+if exist backend\build rmdir /s /q backend\build
 xcopy /E /I frontend\build backend\build
 
 REM Install backend dependencies

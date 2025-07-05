@@ -21,10 +21,10 @@ dotenv.config();
 
 const app = express();
 
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://inkwell-monorepo.onrender.com",
-];
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? ["https://inkwell-monorepo.onrender.com"]
+    : ["http://localhost:3000", "https://inkwell-monorepo.onrender.com"];
 
 const corsOptions = {
   origin: function (origin, callback) {

@@ -16,6 +16,8 @@ cd ..
 
 # Copy frontend build to backend
 echo "📁 Copying frontend build to backend..."
+# Remove old build if exists
+rm -rf backend/build
 cp -r frontend/build backend/
 
 # Install backend dependencies
